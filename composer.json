@@ -1,0 +1,20 @@
+{
+    "name": "tweakphp/client",
+    "type": "library",
+    "autoload": {
+        "psr-4": {
+            "TweakPHP\\Client\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Saeed Vaziry",
+            "email": "mr.saeedvaziry@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=7.0",
+        "spatie/laravel-web-tinker": "^1.9",
+        "ext-json": "*"
+    }
+}

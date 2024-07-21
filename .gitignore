@@ -1,0 +1,7 @@
+.idea
+.vscode
+
+vendor
+client.phar
+
+.DS_Store
