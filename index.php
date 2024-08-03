@@ -18,7 +18,7 @@ if ($loader === null) {
     exit(1);
 }
 
-$loader->initTinker();
+$loader->init();
 
 $supportedCommands = [
     'info',

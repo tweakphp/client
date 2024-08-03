@@ -17,7 +17,7 @@ interface LoaderInterface
     /**
      * @return void
      */
-    public function initTinker();
+    public function init();
 
     /**
      * @param string $code

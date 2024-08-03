@@ -10,7 +10,7 @@ abstract class BaseLoader implements LoaderInterface
 {
     protected $tinker;
 
-    public function initTinker(): void
+    public function init()
     {
         $config = new Configuration([
             'updateCheck' => 'never',
@@ -35,7 +35,7 @@ abstract class BaseLoader implements LoaderInterface
         $this->tinker = new Tinker(new CustomOutputModifier(), $config);
     }
 
-    public function execute(string $code): void
+    public function execute(string $code)
     {
         $output = $this->tinker->execute($code);
 
