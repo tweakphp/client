@@ -14,7 +14,7 @@
     ],
     "require": {
         "php": ">=7.0",
-        "spatie/laravel-web-tinker": "^1.9",
-        "ext-json": "*"
+        "ext-json": "*",
+        "psy/psysh": "^0.12.4"
     }
 }

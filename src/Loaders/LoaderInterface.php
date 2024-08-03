@@ -1,6 +1,6 @@
 <?php
 
-namespace TweakPHP\Client;
+namespace TweakPHP\Client\Loaders;
 
 interface LoaderInterface
 {
@@ -15,6 +15,12 @@ interface LoaderInterface
     public function version(): string;
 
     /**
+     * @return void
+     */
+    public function initTinker();
+
+    /**
+     * @param string $code
      * @return void
      */
     public function execute(string $code);

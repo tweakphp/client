@@ -18,6 +18,8 @@ if ($loader === null) {
     exit(1);
 }
 
+$loader->initTinker();
+
 $supportedCommands = [
     'info',
     'execute',

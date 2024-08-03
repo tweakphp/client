@@ -1,18 +1,11 @@
 <?php
 
-namespace TweakPHP\Client\Laravel;
+namespace TweakPHP\Client\Loaders;
 
-use TweakPHP\Client\LoaderInterface;
-use Spatie\WebTinker\Tinker;
 use Throwable;
 
-class LaravelLoader implements LoaderInterface
+class LaravelLoader extends BaseLoader
 {
-    /**
-     * @var string
-     */
-    private $path;
-
     private $app;
 
     /**
@@ -20,7 +13,6 @@ class LaravelLoader implements LoaderInterface
      */
     public function __construct(string $path)
     {
-        $this->path = $path;
         require $path . '/vendor/autoload.php';
         $this->app = require_once $path . '/bootstrap/app.php';
         $this->app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
@@ -40,6 +32,9 @@ class LaravelLoader implements LoaderInterface
         }
     }
 
+    /**
+     * @return string
+     */
     public function name(): string
     {
         return 'Laravel';
@@ -51,13 +46,5 @@ class LaravelLoader implements LoaderInterface
     public function version(): string
     {
         return $this->app->version();
-    }
-
-    public function execute(string $code)
-    {
-        $tinker = new Tinker(new CustomOutputModifier());
-        $output = $tinker->execute($code);
-
-        echo trim($output);
     }
 }

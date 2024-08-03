@@ -1,8 +1,6 @@
 <?php
 
-namespace TweakPHP\Client\Laravel;
-
-use Spatie\WebTinker\OutputModifiers\OutputModifier;
+namespace TweakPHP\Client\OutputModifiers;
 
 class CustomOutputModifier implements OutputModifier
 {
