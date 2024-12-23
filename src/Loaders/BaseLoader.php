@@ -3,19 +3,20 @@
 namespace TweakPHP\Client\Loaders;
 
 use Psy\Configuration;
+use Psy\VersionUpdater\Checker;
 use TweakPHP\Client\OutputModifiers\CustomOutputModifier;
 use TweakPHP\Client\Tinker;
 
 abstract class BaseLoader implements LoaderInterface
 {
-    protected $tinker;
+    protected Tinker $tinker;
 
     public function init()
     {
         $config = new Configuration([
-            'updateCheck' => 'never',
             'configFile' => null,
         ]);
+        $config->setUpdateCheck(Checker::NEVER);
         if (class_exists('Illuminate\Support\Collection') && class_exists('Laravel\Tinker\TinkerCaster')) {
             $config->getPresenter()->addCasters([
                 \Illuminate\Support\Collection::class => 'Laravel\Tinker\TinkerCaster::castCollection',
@@ -31,6 +32,7 @@ abstract class BaseLoader implements LoaderInterface
                 \Illuminate\Foundation\Application::class => 'Laravel\Tinker\TinkerCaster::castApplication',
             ]);
         }
+        $config->setRawOutput(true);
 
         $this->tinker = new Tinker(new CustomOutputModifier(), $config);
     }

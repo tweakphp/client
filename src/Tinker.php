@@ -9,14 +9,11 @@ use TweakPHP\Client\OutputModifiers\OutputModifier;
 
 class Tinker
 {
-    /** @var BufferedOutput */
-    protected $output;
+    protected BufferedOutput $output;
 
-    /** @var Shell */
-    protected $shell;
+    protected Shell $shell;
 
-    /** @var OutputModifier */
-    protected $outputModifier;
+    protected OutputModifier $outputModifier;
 
     public function __construct(OutputModifier $outputModifier, $config)
     {
@@ -65,7 +62,6 @@ class Tinker
                 if (in_array($id, [T_COMMENT, T_DOC_COMMENT, T_OPEN_TAG, T_CLOSE_TAG])) {
                     continue;
                 }
-
                 $result .= $text;
             } else {
                 $result .= $token;
