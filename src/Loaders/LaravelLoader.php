@@ -10,6 +10,15 @@ class LaravelLoader extends ComposerLoader
 
     /**
      * @param string $path
+     * @return bool
+     */
+    public static function supports(string $path): bool
+    {
+        return file_exists($path . '/vendor/autoload.php') && file_exists($path . '/bootstrap/app.php');
+    }
+
+    /**
+     * @param string $path
      */
     public function __construct(string $path)
     {
