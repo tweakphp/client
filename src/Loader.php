@@ -5,6 +5,7 @@ namespace TweakPHP\Client;
 use TweakPHP\Client\Loaders\ComposerLoader;
 use TweakPHP\Client\Loaders\LaravelLoader;
 use TweakPHP\Client\Loaders\LoaderInterface;
+use TweakPHP\Client\Loaders\PimcoreLoader;
 use TweakPHP\Client\Loaders\SymfonyLoader;
 use TweakPHP\Client\Loaders\WordPressLoader;
 
@@ -26,6 +27,10 @@ class Loader
 
         if (file_exists($path . '/wp-load.php')) {
             return new WordPressLoader($path);
+        }
+
+        if (file_exists($path . '/vendor/autoload.php') && file_exists($path . '/vendor/pimcore/pimcore')) {
+            return new PimcoreLoader($path);
         }
 
         if (file_exists($path . '/vendor/autoload.php')) {
