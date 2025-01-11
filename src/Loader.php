@@ -17,23 +17,19 @@ class Loader
      */
     public static function load(string $path)
     {
-        if (file_exists($path . '/vendor/autoload.php') && file_exists($path . '/bootstrap/app.php')) {
+        if (LaravelLoader::supports($path)) {
             return new LaravelLoader($path);
         }
 
-        if (file_exists($path . '/vendor/autoload.php') && file_exists($path . '/symfony.lock') && file_exists($path . '/src/Kernel.php')) {
+        if (SymfonyLoader::supports($path)) {
             return new SymfonyLoader($path);
         }
 
-        if (file_exists($path . '/wp-load.php')) {
+        if (WordPressLoader::supports($path)) {
             return new WordPressLoader($path);
         }
 
-        if (file_exists($path . '/vendor/autoload.php') && file_exists($path . '/vendor/pimcore/pimcore')) {
-            return new PimcoreLoader($path);
-        }
-
-        if (file_exists($path . '/vendor/autoload.php')) {
+        if (ComposerLoader::supports($path)) {
             return new ComposerLoader($path);
         }
 

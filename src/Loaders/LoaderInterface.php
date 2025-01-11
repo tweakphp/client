@@ -5,6 +5,12 @@ namespace TweakPHP\Client\Loaders;
 interface LoaderInterface
 {
     /**
+     * @param string $path
+     * @return bool
+     */
+    public static function supports(string $path): bool;
+
+    /**
      * @return string
      */
     public function name(): string;
