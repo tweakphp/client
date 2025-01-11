@@ -5,6 +5,7 @@ namespace TweakPHP\Client;
 use TweakPHP\Client\Loaders\ComposerLoader;
 use TweakPHP\Client\Loaders\LaravelLoader;
 use TweakPHP\Client\Loaders\LoaderInterface;
+use TweakPHP\Client\Loaders\PimcoreLoader;
 use TweakPHP\Client\Loaders\SymfonyLoader;
 use TweakPHP\Client\Loaders\WordPressLoader;
 
