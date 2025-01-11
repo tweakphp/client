@@ -27,12 +27,14 @@ class Tinker
     public function execute(string $phpCode): string
     {
         $phpCode = $this->removeComments($phpCode);
-        
-        $this->shell->addInput($phpCode);
 
-        $closure = new ExecutionLoopClosure($this->shell);
-
-        $closure->execute();
+        if (defined('PHP_WINDOWS_VERSION_BUILD')) {
+            $this->shell->execute($phpCode);
+        } else {
+            $this->shell->addInput($phpCode);
+            $closure = new ExecutionLoopClosure($this->shell);
+            $closure->execute();
+        }
 
         $output = $this->cleanOutput($this->output->fetch());
 

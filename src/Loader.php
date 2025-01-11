@@ -29,6 +29,10 @@ class Loader
             return new WordPressLoader($path);
         }
 
+        if (PimcoreLoader::supports($path)) {
+            return new PimcoreLoader($path);
+        }
+
         if (ComposerLoader::supports($path)) {
             return new ComposerLoader($path);
         }

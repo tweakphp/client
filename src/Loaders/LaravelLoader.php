@@ -25,20 +25,6 @@ class LaravelLoader extends ComposerLoader
         parent::__construct($path);
         $this->app = require_once $path . '/bootstrap/app.php';
         $this->app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
-        $classAliases = require $path . '/vendor/composer/autoload_classmap.php';
-        $vendorPath = dirname($path . '/vendor/composer/autoload_classmap.php', 2);
-        foreach ($classAliases as $class => $path) {
-            if (!str_contains($class, '\\')) {
-                continue;
-            }
-            if (str_starts_with($path, $vendorPath)) {
-                continue;
-            }
-            try {
-                class_alias($class, class_basename($class));
-            } catch (Throwable $e) {
-            }
-        }
     }
 
     /**

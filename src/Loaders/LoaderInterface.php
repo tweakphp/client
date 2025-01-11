@@ -27,7 +27,7 @@ interface LoaderInterface
 
     /**
      * @param string $code
-     * @return void
+     * @return string
      */
     public function execute(string $code);
 }

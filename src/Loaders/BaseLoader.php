@@ -17,6 +17,9 @@ abstract class BaseLoader implements LoaderInterface
             'configFile' => null,
         ]);
         $config->setUpdateCheck(Checker::NEVER);
+        $config->setRawOutput(true);
+        $config->setInteractiveMode(Configuration::INTERACTIVE_MODE_DISABLED);
+
         if (class_exists('Illuminate\Support\Collection') && class_exists('Laravel\Tinker\TinkerCaster')) {
             $config->getPresenter()->addCasters([
                 \Illuminate\Support\Collection::class => 'Laravel\Tinker\TinkerCaster::castCollection',
@@ -32,7 +35,6 @@ abstract class BaseLoader implements LoaderInterface
                 \Illuminate\Foundation\Application::class => 'Laravel\Tinker\TinkerCaster::castApplication',
             ]);
         }
-        $config->setRawOutput(true);
 
         $this->tinker = new Tinker(new CustomOutputModifier(), $config);
     }
