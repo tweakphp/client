@@ -19,6 +19,13 @@ abstract class BaseLoader implements LoaderInterface
         $config->setUpdateCheck(Checker::NEVER);
         $config->setRawOutput(true);
         $config->setInteractiveMode(Configuration::INTERACTIVE_MODE_DISABLED);
+        $config->setColorMode(Configuration::COLOR_MODE_DISABLED);
+        $config->setTheme([
+            'prompt' => '',
+        ]);
+        $config->setVerbosity(Configuration::VERBOSITY_QUIET);
+        $config->setHistoryFile(defined('PHP_WINDOWS_VERSION_BUILD') ? 'null' : '/dev/null');
+        $config->setRawOutput(false);
 
         if (class_exists('Illuminate\Support\Collection') && class_exists('Laravel\Tinker\TinkerCaster')) {
             $config->getPresenter()->addCasters([
