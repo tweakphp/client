@@ -18,8 +18,5 @@
         "psy/psysh": "*"
     },
     "minimum-stability": "stable",
-    "prefer-stable": true,
-    "require-dev": {
-        "laravel/pint": "^1.19"
-    }
+    "prefer-stable": true
 }
