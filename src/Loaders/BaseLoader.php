@@ -26,6 +26,7 @@ abstract class BaseLoader implements LoaderInterface
         $config->setVerbosity(Configuration::VERBOSITY_QUIET);
         $config->setHistoryFile(defined('PHP_WINDOWS_VERSION_BUILD') ? 'null' : '/dev/null');
         $config->setRawOutput(false);
+        $config->setUsePcntl(false);
 
         if (class_exists('Illuminate\Support\Collection') && class_exists('Laravel\Tinker\TinkerCaster')) {
             $config->getPresenter()->addCasters([
