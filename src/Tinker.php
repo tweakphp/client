@@ -18,7 +18,7 @@ class Tinker
 
     public function __construct(OutputModifier $outputModifier, Configuration $config)
     {
-        $this->output = new BufferedOutput();
+        $this->output = new BufferedOutput;
 
         $this->shell = $this->createShell($this->output, $config);
 
@@ -29,13 +29,23 @@ class Tinker
     {
         $phpCode = $this->removeComments($phpCode);
 
-        $this->shell->addInput($phpCode);
-        $closure = new ExecutionLoopClosure($this->shell);
-        $closure->execute();
+        $phpCode = explode("\n", $phpCode);
 
-        $output = $this->cleanOutput($this->output->fetch());
+        $output = '';
 
-        return $this->outputModifier->modify($output);
+        foreach ($phpCode as $key => $line) {
+            $this->shell->addInput($line);
+            $closure = new ExecutionLoopClosure($this->shell);
+            $closure->execute();
+            $result = $this->outputModifier->modify($this->cleanOutput($this->output->fetch()));
+            if (trim($result) !== '' && trim($result) !== 'null') {
+                $output .= 'Line '.$key + 1 .' Result:'.PHP_EOL;
+                $output .= $result;
+                $output .= PHP_EOL;
+            }
+        }
+
+        return $output;
     }
 
     protected function createShell(BufferedOutput $output, Configuration $config): Shell
@@ -49,12 +59,12 @@ class Tinker
 
     public function removeComments(string $code): string
     {
-        $tokens = token_get_all("<?php\n" . $code . '?>');
+        $tokens = token_get_all("<?php\n".$code.'?>');
         $result = '';
 
         foreach ($tokens as $token) {
             if (is_array($token)) {
-                list($id, $text) = $token;
+                [$id, $text] = $token;
 
                 if (in_array($id, [T_COMMENT, T_DOC_COMMENT, T_OPEN_TAG, T_CLOSE_TAG])) {
                     continue;

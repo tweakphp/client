@@ -8,7 +8,7 @@ class PimcoreLoader extends BaseLoader
 {
     public function __construct(string $path)
     {
-        require_once $path . '/vendor/autoload.php';
+        require_once $path.'/vendor/autoload.php';
 
         if (class_exists('\Pimcore\Bootstrap')) {
             \Pimcore\Bootstrap::setProjectRoot();
@@ -29,6 +29,6 @@ class PimcoreLoader extends BaseLoader
 
     public static function supports(string $path): bool
     {
-        return file_exists($path . '/vendor/autoload.php') && file_exists($path . '/vendor/pimcore/pimcore');
+        return file_exists($path.'/vendor/autoload.php') && file_exists($path.'/vendor/pimcore/pimcore');
     }
 }

@@ -43,7 +43,7 @@ abstract class BaseLoader implements LoaderInterface
             ]);
         }
 
-        $this->tinker = new Tinker(new CustomOutputModifier(), $config);
+        $this->tinker = new Tinker(new CustomOutputModifier, $config);
     }
 
     public function execute(string $code)

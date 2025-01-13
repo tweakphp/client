@@ -12,7 +12,6 @@ use TweakPHP\Client\Loaders\WordPressLoader;
 class Loader
 {
     /**
-     * @param string $path
      * @return null|LoaderInterface
      */
     public static function load(string $path)

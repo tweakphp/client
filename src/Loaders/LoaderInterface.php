@@ -4,20 +4,10 @@ namespace TweakPHP\Client\Loaders;
 
 interface LoaderInterface
 {
-    /**
-     * @param string $path
-     * @return bool
-     */
     public static function supports(string $path): bool;
 
-    /**
-     * @return string
-     */
     public function name(): string;
 
-    /**
-     * @return string
-     */
     public function version(): string;
 
     /**
@@ -26,7 +16,6 @@ interface LoaderInterface
     public function init();
 
     /**
-     * @param string $code
      * @return string
      */
     public function execute(string $code);

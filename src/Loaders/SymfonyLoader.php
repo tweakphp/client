@@ -8,9 +8,9 @@ class SymfonyLoader extends ComposerLoader
 
     public static function supports(string $path): bool
     {
-        return file_exists($path . '/vendor/autoload.php') &&
-            file_exists($path . '/symfony.lock') &&
-            file_exists($path . '/src/Kernel.php');
+        return file_exists($path.'/vendor/autoload.php') &&
+            file_exists($path.'/symfony.lock') &&
+            file_exists($path.'/src/Kernel.php');
     }
 
     public function __construct(string $path)
@@ -18,7 +18,7 @@ class SymfonyLoader extends ComposerLoader
         parent::__construct($path);
 
         // Include the Composer autoloader
-        require_once $path . '/vendor/autoload.php';
+        require_once $path.'/vendor/autoload.php';
 
         // Initialize the Symfony Kernel
         $env = $_SERVER['APP_ENV'] ?? 'dev';
@@ -31,7 +31,7 @@ class SymfonyLoader extends ComposerLoader
 
     private function findKernelClass(string $path): string
     {
-        require_once $path . '/src/Kernel.php';
+        require_once $path.'/src/Kernel.php';
 
         return 'App\\Kernel';
     }
