@@ -33,9 +33,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-php-
 
-      - name: Install dependencies
-        if: steps.composer-cache.outputs.cache-hit != 'true'
-        run: composer install --prefer-dist --no-progress --no-suggest
+      - name: Install Pint
+        run: composer global require laravel/pint
 
-      - name: Run pint
-        run: ./vendor/bin/pint --test
+      - name: Run Pint
+        run: pint --test
