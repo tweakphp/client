@@ -11,7 +11,7 @@ abstract class BaseLoader implements LoaderInterface
 {
     protected Tinker $tinker;
 
-    public function init()
+    public function init(): void
     {
         $config = new Configuration([
             'configFile' => null,
@@ -26,7 +26,9 @@ abstract class BaseLoader implements LoaderInterface
         $config->setVerbosity(Configuration::VERBOSITY_QUIET);
         $config->setHistoryFile(defined('PHP_WINDOWS_VERSION_BUILD') ? 'null' : '/dev/null');
         $config->setRawOutput(false);
-        $config->setUsePcntl(false);
+        if (getenv('KUBERNETES_SERVICE_HOST') || defined('PHP_WINDOWS_VERSION_BUILD')) {
+            $config->setUsePcntl(false);
+        }
 
         if (class_exists('Illuminate\Support\Collection') && class_exists('Laravel\Tinker\TinkerCaster')) {
             $config->getPresenter()->addCasters([
@@ -47,10 +49,10 @@ abstract class BaseLoader implements LoaderInterface
         $this->tinker = new Tinker(new CustomOutputModifier, $config);
     }
 
-    public function execute(string $code)
+    public function execute(string $code): string
     {
         $output = $this->tinker->execute($code);
 
-        echo trim($output);
+        return trim($output);
     }
 }

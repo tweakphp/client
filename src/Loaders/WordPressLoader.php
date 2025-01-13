@@ -26,7 +26,9 @@ class WordPressLoader extends BaseLoader
     public function version(): string
     {
         try {
-            return get_bloginfo('version');
+            if (function_exists('get_bloginfo')) {
+                return get_bloginfo('version');
+            }
         } catch (Throwable $e) {
             //
         }

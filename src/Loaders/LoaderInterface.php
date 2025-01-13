@@ -10,13 +10,7 @@ interface LoaderInterface
 
     public function version(): string;
 
-    /**
-     * @return void
-     */
-    public function init();
+    public function init(): void;
 
-    /**
-     * @return string
-     */
-    public function execute(string $code);
+    public function execute(string $code): string;
 }

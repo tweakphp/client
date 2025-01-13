@@ -29,23 +29,15 @@ class Tinker
     {
         $phpCode = $this->removeComments($phpCode);
 
-        $phpCode = explode("\n", $phpCode);
+        $this->shell->addInput($phpCode);
 
-        $output = '';
+        $closure = new ExecutionLoopClosure($this->shell);
 
-        foreach ($phpCode as $key => $line) {
-            $this->shell->addInput($line);
-            $closure = new ExecutionLoopClosure($this->shell);
-            $closure->execute();
-            $result = $this->outputModifier->modify($this->cleanOutput($this->output->fetch()));
-            if (trim($result) !== '' && trim($result) !== 'null') {
-                $output .= 'Line '.$key + 1 .' Result:'.PHP_EOL;
-                $output .= $result;
-                $output .= PHP_EOL;
-            }
-        }
+        $closure->execute();
 
-        return $output;
+        $output = $this->cleanOutput($this->output->fetch());
+
+        return $this->outputModifier->modify($output);
     }
 
     protected function createShell(BufferedOutput $output, Configuration $config): Shell
