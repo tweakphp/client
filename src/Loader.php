@@ -12,7 +12,6 @@ use TweakPHP\Client\Loaders\WordPressLoader;
 class Loader
 {
     /**
-     * @param string $path
      * @return null|LoaderInterface
      */
     public static function load(string $path)
@@ -27,6 +26,10 @@ class Loader
 
         if (WordPressLoader::supports($path)) {
             return new WordPressLoader($path);
+        }
+
+        if (PimcoreLoader::supports($path)) {
+            return new PimcoreLoader($path);
         }
 
         if (ComposerLoader::supports($path)) {

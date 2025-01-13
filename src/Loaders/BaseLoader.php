@@ -11,12 +11,25 @@ abstract class BaseLoader implements LoaderInterface
 {
     protected Tinker $tinker;
 
-    public function init()
+    public function init(): void
     {
         $config = new Configuration([
             'configFile' => null,
         ]);
         $config->setUpdateCheck(Checker::NEVER);
+        $config->setRawOutput(true);
+        $config->setInteractiveMode(Configuration::INTERACTIVE_MODE_DISABLED);
+        $config->setColorMode(Configuration::COLOR_MODE_DISABLED);
+        $config->setTheme([
+            'prompt' => '',
+        ]);
+        $config->setVerbosity(Configuration::VERBOSITY_QUIET);
+        $config->setHistoryFile(defined('PHP_WINDOWS_VERSION_BUILD') ? 'null' : '/dev/null');
+        $config->setRawOutput(false);
+        if (getenv('KUBERNETES_SERVICE_HOST') || defined('PHP_WINDOWS_VERSION_BUILD')) {
+            $config->setUsePcntl(false);
+        }
+
         if (class_exists('Illuminate\Support\Collection') && class_exists('Laravel\Tinker\TinkerCaster')) {
             $config->getPresenter()->addCasters([
                 \Illuminate\Support\Collection::class => 'Laravel\Tinker\TinkerCaster::castCollection',
@@ -32,15 +45,14 @@ abstract class BaseLoader implements LoaderInterface
                 \Illuminate\Foundation\Application::class => 'Laravel\Tinker\TinkerCaster::castApplication',
             ]);
         }
-        $config->setRawOutput(true);
 
-        $this->tinker = new Tinker(new CustomOutputModifier(), $config);
+        $this->tinker = new Tinker(new CustomOutputModifier, $config);
     }
 
-    public function execute(string $code)
+    public function execute(string $code): string
     {
         $output = $this->tinker->execute($code);
 
-        echo trim($output);
+        return trim($output);
     }
 }

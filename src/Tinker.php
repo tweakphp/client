@@ -2,6 +2,7 @@
 
 namespace TweakPHP\Client;
 
+use Psy\Configuration;
 use Psy\ExecutionLoopClosure;
 use Psy\Shell;
 use Symfony\Component\Console\Output\BufferedOutput;
@@ -15,9 +16,9 @@ class Tinker
 
     protected OutputModifier $outputModifier;
 
-    public function __construct(OutputModifier $outputModifier, $config)
+    public function __construct(OutputModifier $outputModifier, Configuration $config)
     {
-        $this->output = new BufferedOutput();
+        $this->output = new BufferedOutput;
 
         $this->shell = $this->createShell($this->output, $config);
 
@@ -27,7 +28,7 @@ class Tinker
     public function execute(string $phpCode): string
     {
         $phpCode = $this->removeComments($phpCode);
-        
+
         $this->shell->addInput($phpCode);
 
         $closure = new ExecutionLoopClosure($this->shell);
@@ -39,10 +40,8 @@ class Tinker
         return $this->outputModifier->modify($output);
     }
 
-    protected function createShell(BufferedOutput $output, $config): Shell
+    protected function createShell(BufferedOutput $output, Configuration $config): Shell
     {
-        $config->setHistoryFile(defined('PHP_WINDOWS_VERSION_BUILD') ? 'null' : '/dev/null');
-
         $shell = new Shell($config);
 
         $shell->setOutput($output);
@@ -52,12 +51,12 @@ class Tinker
 
     public function removeComments(string $code): string
     {
-        $tokens = token_get_all("<?php\n" . $code . '?>');
+        $tokens = token_get_all("<?php\n".$code.'?>');
         $result = '';
 
         foreach ($tokens as $token) {
             if (is_array($token)) {
-                list($id, $text) = $token;
+                [$id, $text] = $token;
 
                 if (in_array($id, [T_COMMENT, T_DOC_COMMENT, T_OPEN_TAG, T_CLOSE_TAG])) {
                     continue;

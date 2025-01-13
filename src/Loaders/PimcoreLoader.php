@@ -1,21 +1,21 @@
 <?php
 
-declare(strict_types=1);
-
 namespace TweakPHP\Client\Loaders;
+
+use Composer\InstalledVersions;
 
 class PimcoreLoader extends BaseLoader
 {
     public function __construct(string $path)
     {
-        // Include the Composer autoloader
-        require_once $path . '/vendor/autoload.php';
+        require_once $path.'/vendor/autoload.php';
 
-        \Pimcore\Bootstrap::setProjectRoot();
-        \Pimcore\Bootstrap::bootstrap();
-        \Pimcore\Bootstrap::kernel();
+        if (class_exists('\Pimcore\Bootstrap')) {
+            \Pimcore\Bootstrap::setProjectRoot();
+            \Pimcore\Bootstrap::bootstrap();
+            \Pimcore\Bootstrap::kernel();
+        }
     }
-
 
     public function name(): string
     {
@@ -24,7 +24,11 @@ class PimcoreLoader extends BaseLoader
 
     public function version(): string
     {
-        return \Composer\InstalledVersions::getPrettyVersion('pimcore/pimcore');
+        return InstalledVersions::getPrettyVersion('pimcore/pimcore');
     }
 
+    public static function supports(string $path): bool
+    {
+        return file_exists($path.'/vendor/autoload.php') && file_exists($path.'/vendor/pimcore/pimcore');
+    }
 }
