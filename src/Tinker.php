@@ -31,9 +31,7 @@ class Tinker
 
         $this->shell->addInput($phpCode);
 
-        if (defined('PHP_WINDOWS_VERSION_BUILD')) {
-            $this->shell->addInput("\necho('TWEAKPHP_END'); exit();");
-        }
+        $this->shell->addInput("\necho('TWEAKPHP_END'); exit();");
 
         $closure = new ExecutionLoopClosure($this->shell);
 

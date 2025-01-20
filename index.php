@@ -11,15 +11,6 @@ if (count($arguments) < 3) {
     exit(1);
 }
 
-function dd(...$args)
-{
-    if (count($args) === 1) {
-        return $args[0];
-    }
-
-    return $args;
-}
-
 $loader = Loader::load($arguments[1]);
 
 if ($loader === null) {
