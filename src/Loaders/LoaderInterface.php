@@ -12,5 +12,5 @@ interface LoaderInterface
 
     public function init(): void;
 
-    public function execute(string $code): string;
+    public function execute(string $code): array;
 }

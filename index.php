@@ -11,15 +11,6 @@ if (count($arguments) < 3) {
     exit(1);
 }
 
-function dd(...$args)
-{
-    if (count($args) === 1) {
-        return $args[0];
-    }
-
-    return $args;
-}
-
 $loader = Loader::load($arguments[1]);
 
 if ($loader === null) {
@@ -53,6 +44,7 @@ switch ($arguments[2]) {
             echo 'Invalid arguments'.PHP_EOL;
             exit(1);
         }
-        echo $loader->execute(base64_decode($arguments[3])).PHP_EOL;
+        $output = json_encode($loader->execute(base64_decode($arguments[3])));
+        echo 'TWEAKPHP_RESULT:'.$output.PHP_EOL;
         break;
 }
