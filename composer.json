@@ -15,7 +15,10 @@
     "require": {
         "php": ">=7.4",
         "ext-json": "*",
-        "psy/psysh": "*"
+        "psy/psysh": "*",
+        "nikic/php-parser": "*",
+        "symfony/var-dumper": "*",
+        "symfony/console": "*"
     },
     "minimum-stability": "stable",
     "prefer-stable": true

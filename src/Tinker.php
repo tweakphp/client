@@ -2,6 +2,8 @@
 
 namespace TweakPHP\Client;
 
+use PhpParser\ParserFactory;
+use PhpParser\PrettyPrinter\Standard;
 use Psy\Configuration;
 use Psy\ExecutionLoopClosure;
 use Psy\Shell;
@@ -16,6 +18,10 @@ class Tinker
 
     protected OutputModifier $outputModifier;
 
+    public static array $statements = [];
+
+    public static int $current = 0;
+
     public function __construct(OutputModifier $outputModifier, Configuration $config)
     {
         $this->output = new BufferedOutput;
@@ -25,21 +31,41 @@ class Tinker
         $this->outputModifier = $outputModifier;
     }
 
-    public function execute(string $phpCode): string
+    public function execute(string $rawPHPCode): array
     {
-        $phpCode = $this->removeComments($phpCode);
+        if (strpos($rawPHPCode, '<?php') === false) {
+            $rawPHPCode = "<?php\n".$rawPHPCode;
+        }
 
-        $this->shell->addInput($phpCode);
+        $parser = (new ParserFactory)->createForHostVersion();
+        $prettyPrinter = new Standard;
+        foreach ($parser->parse($rawPHPCode) as $key => $stmt) {
+            $code = $prettyPrinter->prettyPrint([$stmt]);
+            self::$current = $key;
+            self::$statements[] = [
+                'line' => $stmt->getStartLine(),
+                'code' => $code,
+            ];
+            $output = $this->doExecute($code);
+            self::$statements[$key]['output'] = $output;
+        }
 
+        return [
+            'output' => self::$statements,
+        ];
+    }
+
+    protected function doExecute(string $code): string
+    {
+        $this->shell->addInput($code);
         $this->shell->addInput("\necho('TWEAKPHP_END'); exit();");
-
+        $this->output = new BufferedOutput;
+        $this->shell->setOutput($this->output);
         $closure = new ExecutionLoopClosure($this->shell);
-
         $closure->execute();
+        $result = $this->outputModifier->modify($this->cleanOutput($this->output->fetch()));
 
-        $output = $this->cleanOutput($this->output->fetch());
-
-        return $this->outputModifier->modify($output);
+        return trim($result);
     }
 
     protected function createShell(BufferedOutput $output, Configuration $config): Shell
@@ -49,27 +75,6 @@ class Tinker
         $shell->setOutput($output);
 
         return $shell;
-    }
-
-    public function removeComments(string $code): string
-    {
-        $tokens = token_get_all("<?php\n".$code.'?>');
-        $result = '';
-
-        foreach ($tokens as $token) {
-            if (is_array($token)) {
-                [$id, $text] = $token;
-
-                if (in_array($id, [T_COMMENT, T_DOC_COMMENT, T_OPEN_TAG, T_CLOSE_TAG])) {
-                    continue;
-                }
-                $result .= $text;
-            } else {
-                $result .= $token;
-            }
-        }
-
-        return $result;
     }
 
     protected function cleanOutput(string $output): string
