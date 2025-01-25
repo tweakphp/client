@@ -4,7 +4,6 @@ namespace TweakPHP\Client\Loaders;
 
 use Psy\Configuration as ConfigurationAlias;
 use Psy\VersionUpdater\Checker;
-use TweakPHP\Client\Casters\LaravelCaster;
 use TweakPHP\Client\OutputModifiers\CustomOutputModifier;
 use TweakPHP\Client\Psy\Configuration;
 use TweakPHP\Client\Tinker;
@@ -28,7 +27,7 @@ abstract class BaseLoader implements LoaderInterface
         $config->setHistoryFile(defined('PHP_WINDOWS_VERSION_BUILD') ? 'null' : '/dev/null');
         $config->setUsePcntl(false);
 
-        $config->getPresenter()->addCasters(LaravelCaster::casters());
+        $config->getPresenter()->addCasters($this->casters());
 
         $this->tinker = new Tinker(new CustomOutputModifier, $config);
     }
@@ -36,5 +35,10 @@ abstract class BaseLoader implements LoaderInterface
     public function execute(string $code): array
     {
         return $this->tinker->execute($code);
+    }
+
+    public function casters(): array
+    {
+        return [];
     }
 }

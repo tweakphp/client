@@ -13,4 +13,6 @@ interface LoaderInterface
     public function init(): void;
 
     public function execute(string $code): array;
+
+    public function casters(): array;
 }
