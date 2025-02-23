@@ -1,5 +1,6 @@
 <?php
 
+use TweakPHP\Client\Cli;
 use TweakPHP\Client\Loader;
 
 require __DIR__.'/vendor/autoload.php';
@@ -11,7 +12,8 @@ if (count($arguments) < 3) {
     exit(1);
 }
 
-$loader = Loader::load($arguments[1]);
+$customLoader = Cli::getArgument('loader');
+$loader = Loader::load($arguments[1], $customLoader);
 
 if ($loader === null) {
     echo 'Invalid path'.PHP_EOL;
