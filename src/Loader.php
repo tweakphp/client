@@ -14,10 +14,10 @@ class Loader
     /**
      * @return null|LoaderInterface
      */
-    public static function load(string $path, ?string $loaderPath = null)
+    public static function load(string $path, ?string $encodedLoader = null)
     {
-        if ($loaderPath !== null) {
-            $loaderClass = self::getLoaderClassFromPath($loaderPath);
+        if ($encodedLoader !== null) {
+            $loaderClass = self::getLoaderClassFrom($encodedLoader);
 
             if ($loaderClass !== null) {
                 return new $loaderClass($path);
@@ -47,20 +47,13 @@ class Loader
         return null;
     }
 
-    private static function getLoaderClassFromPath(string $path)
+    private static function getLoaderClassFrom(string $encodedLoader)
     {
-        if (! file_exists($path)) {
-            return null;
-        }
-
         $declaredClassesBefore = get_declared_classes();
-
-        require_once $path;
-
+        $loader = base64_decode($encodedLoader);
+        eval(str_replace('<?php', '', $loader));
         $declaredClassesAfter = get_declared_classes();
-
         $newClasses = array_diff($declaredClassesAfter, $declaredClassesBefore);
-
         if (empty($newClasses)) {
             return null;
         }

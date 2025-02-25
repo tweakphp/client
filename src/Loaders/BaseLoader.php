@@ -41,4 +41,9 @@ abstract class BaseLoader implements LoaderInterface
     {
         return [];
     }
+
+    public static function supports(string $path): bool
+    {
+        return false;
+    }
 }
