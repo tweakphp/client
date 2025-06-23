@@ -18,6 +18,13 @@ class LaravelLoader extends ComposerLoader
         $this->app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
     }
 
+    public function init(): void
+    {
+        parent::init();
+
+        $this->bootAliases();
+    }
+
     public function name(): string
     {
         return 'Laravel';
@@ -49,5 +56,23 @@ class LaravelLoader extends ComposerLoader
         }
 
         return $casters;
+    }
+
+    private function bootAliases(): void
+    {
+        if (! class_exists(\Laravel\Tinker\ClassAliasAutoloader::class)) {
+            return;
+        }
+
+        $config = $this->app->make('config');
+
+        $path = \Illuminate\Support\Env::get('COMPOSER_VENDOR_DIR', $this->app->basePath().DIRECTORY_SEPARATOR.'vendor');
+
+        \Laravel\Tinker\ClassAliasAutoloader::register(
+            $this->tinker->getShell(),
+            $path.'/composer/autoload_classmap.php',
+            $config->get('tinker.alias', []),
+            $config->get('tinker.dont_alias', [])
+        );
     }
 }

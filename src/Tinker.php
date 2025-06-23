@@ -85,4 +85,9 @@ class Tinker
 
         return trim($output);
     }
+
+    public function getShell(): Shell
+    {
+        return $this->shell;
+    }
 }
