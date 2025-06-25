@@ -4,6 +4,8 @@ namespace TweakPHP\Client\Psy;
 
 class Configuration extends \Psy\Configuration
 {
+    protected ?Presenter $presenter = null;
+
     public function getPresenter(): Presenter
     {
         if (! isset($this->presenter)) {
