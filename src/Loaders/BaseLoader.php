@@ -18,8 +18,12 @@ abstract class BaseLoader implements LoaderInterface
             'configFile' => null,
         ]);
         $config->setUpdateCheck(Checker::NEVER);
-        $config->setInteractiveMode(ConfigurationAlias::INTERACTIVE_MODE_DISABLED);
-        $config->setColorMode(ConfigurationAlias::COLOR_MODE_DISABLED);
+        if (method_exists($config, 'setInteractiveMode')) {
+            $config->setInteractiveMode(ConfigurationAlias::INTERACTIVE_MODE_DISABLED);
+        }
+        if (method_exists($config, 'setColorMode')) {
+            $config->setColorMode(ConfigurationAlias::COLOR_MODE_DISABLED);
+        }
         $config->setRawOutput(false);
         $config->setTheme([
             'prompt' => '',
