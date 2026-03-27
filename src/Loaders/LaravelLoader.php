@@ -2,6 +2,9 @@
 
 namespace TweakPHP\Client\Loaders;
 
+use Illuminate\Support\Env;
+use Laravel\Tinker\ClassAliasAutoloader;
+
 class LaravelLoader extends ComposerLoader
 {
     private $app;
@@ -60,15 +63,15 @@ class LaravelLoader extends ComposerLoader
 
     private function bootAliases(): void
     {
-        if (! class_exists(\Laravel\Tinker\ClassAliasAutoloader::class)) {
+        if (! class_exists(ClassAliasAutoloader::class)) {
             return;
         }
 
         $config = $this->app->make('config');
 
-        $path = \Illuminate\Support\Env::get('COMPOSER_VENDOR_DIR', $this->app->basePath().DIRECTORY_SEPARATOR.'vendor');
+        $path = Env::get('COMPOSER_VENDOR_DIR', $this->app->basePath().DIRECTORY_SEPARATOR.'vendor');
 
-        \Laravel\Tinker\ClassAliasAutoloader::register(
+        ClassAliasAutoloader::register(
             $this->tinker->getShell(),
             $path.'/composer/autoload_classmap.php',
             $config->get('tinker.alias', []),

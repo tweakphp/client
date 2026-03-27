@@ -3,6 +3,7 @@
 namespace TweakPHP\Client\Loaders;
 
 use Composer\InstalledVersions;
+use Pimcore\Bootstrap;
 
 class PimcoreLoader extends BaseLoader
 {
@@ -11,9 +12,9 @@ class PimcoreLoader extends BaseLoader
         require_once $path.'/vendor/autoload.php';
 
         if (class_exists('\Pimcore\Bootstrap')) {
-            \Pimcore\Bootstrap::setProjectRoot();
-            \Pimcore\Bootstrap::bootstrap();
-            \Pimcore\Bootstrap::kernel();
+            Bootstrap::setProjectRoot();
+            Bootstrap::bootstrap();
+            Bootstrap::kernel();
         }
     }
 
