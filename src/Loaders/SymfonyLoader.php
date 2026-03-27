@@ -2,6 +2,8 @@
 
 namespace TweakPHP\Client\Loaders;
 
+use Symfony\Component\HttpKernel\Kernel;
+
 class SymfonyLoader extends ComposerLoader
 {
     private $kernel;
@@ -44,7 +46,7 @@ class SymfonyLoader extends ComposerLoader
     public function version(): string
     {
         if (class_exists('Symfony\Component\HttpKernel\Kernel')) {
-            return \Symfony\Component\HttpKernel\Kernel::VERSION;
+            return Kernel::VERSION;
         }
 
         return '';
