@@ -13,10 +13,10 @@ if (count($arguments) < 3) {
 }
 
 $customLoader = Cli::getArgument('loader');
-$loader = Loader::load($arguments[1], $customLoader);
+$loader = Loader::load($arguments[1], $customLoader ?: null);
 
 if ($loader === null) {
-    echo 'Invalid path'.PHP_EOL;
+    echo 'No supported project found. Make sure the path contains a Composer project (vendor/autoload.php).'.PHP_EOL;
     exit(1);
 }
 
