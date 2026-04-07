@@ -6,6 +6,7 @@ use TweakPHP\Client\Loaders\ComposerLoader;
 use TweakPHP\Client\Loaders\LaravelLoader;
 use TweakPHP\Client\Loaders\LoaderInterface;
 use TweakPHP\Client\Loaders\PimcoreLoader;
+use TweakPHP\Client\Loaders\PlainPhpLoader;
 use TweakPHP\Client\Loaders\SymfonyLoader;
 use TweakPHP\Client\Loaders\WordPressLoader;
 
@@ -42,6 +43,10 @@ class Loader
 
         if (ComposerLoader::supports($path)) {
             return new ComposerLoader($path);
+        }
+
+        if (PlainPhpLoader::supports($path)) {
+            return new PlainPhpLoader($path);
         }
 
         return null;
