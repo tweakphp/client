@@ -37,7 +37,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        php-version: ["7.4", "8.0", "8.1", "8.2", "8.3", "8.4", "8.5"]
+         php-version: ["8.1", "8.2", "8.3", "8.4", "8.5"]
 
     steps:
       - name: Checkout Repository
@@ -49,33 +49,14 @@ jobs:
           php-version: ${{ matrix.php-version }}
           tools: composer
 
-      - name: Remove Vendor and Composer Lock
-        run: |
-          rm -rf vendor composer.lock
-
-      - name: Install Dependencies
-        run: composer install --no-dev
-
       - name: Setup PHP for Box
         uses: shivammathur/setup-php@v2
         with:
           php-version: "8.2"
           tools: composer
 
-      - name: Install Box Globally
-        run: |
-          composer global require humbug/box
-        env:
-          COMPOSER_HOME: ${{ runner.temp }}/composer
-
-      - name: Add Composer Global Bin to PATH
-        run: echo "$COMPOSER_HOME/vendor/bin" >> $GITHUB_PATH
-        env:
-          COMPOSER_HOME: ${{ runner.temp }}/composer
-
-      - name: Compile with Box
-        run: |
-          box compile
+      - name: Build PHAR
+        run: make build
         env:
           COMPOSER_HOME: ${{ runner.temp }}/composer
 

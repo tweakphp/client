@@ -13,7 +13,6 @@ class CustomOutputModifier implements OutputModifier
             $output = substr($output, 0, $position);
         }
 
-        // remove only the first tab from each line
         return preg_replace('/^ {2}/m', '', $output);
     }
 }

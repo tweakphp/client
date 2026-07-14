@@ -14,7 +14,7 @@ interface LoaderInterface
 
     public function execute(string $code): array;
 
-    public function executeStreaming(string $code): void;
+    public function executeStreaming(string $code, callable $onEvent): void;
 
     public function casters(): array;
 }

@@ -11,7 +11,21 @@ class ComposerLoader extends BaseLoader
 
     public function __construct(string $path)
     {
-        require $path.'/vendor/autoload.php';
+        if (! $this->isClientProject($path)) {
+            require $path.'/vendor/autoload.php';
+        }
+    }
+
+    private function isClientProject(string $path): bool
+    {
+        if (! class_exists('Composer\\InstalledVersions') || ! file_exists($path.'/composer.json')) {
+            return false;
+        }
+
+        $composer = json_decode(file_get_contents($path.'/composer.json'), true);
+        $rootPackage = \Composer\InstalledVersions::getRootPackage();
+
+        return is_array($composer) && ($composer['name'] ?? null) === ($rootPackage['name'] ?? null);
     }
 
     public function name(): string

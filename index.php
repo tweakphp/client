@@ -25,6 +25,7 @@ $loader->init();
 $supportedCommands = [
     'info',
     'execute',
+    'execute-stream',
 ];
 
 if (! in_array($arguments[2], $supportedCommands)) {
@@ -48,5 +49,19 @@ switch ($arguments[2]) {
         }
         $output = json_encode($loader->execute(base64_decode($arguments[3])));
         echo 'TWEAKPHP_RESULT:'.$output.PHP_EOL;
+        break;
+    case 'execute-stream':
+        if (count($arguments) < 4) {
+            echo 'Invalid arguments'.PHP_EOL;
+            exit(1);
+        }
+
+        $loader->executeStreaming(base64_decode($arguments[3]), function (array $event): void {
+            file_put_contents(
+                'php://stdout',
+                'TWEAKPHP_STREAM:'.json_encode($event).PHP_EOL,
+                FILE_APPEND
+            );
+        });
         break;
 }

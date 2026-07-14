@@ -3,6 +3,7 @@
 namespace TweakPHP\Client\Loaders;
 
 use Symfony\Component\HttpKernel\Kernel;
+use TweakPHP\Client\Database\QueryCollector;
 
 class SymfonyLoader extends ComposerLoader
 {
@@ -29,6 +30,8 @@ class SymfonyLoader extends ComposerLoader
         $kernelClass = $this->findKernelClass($path);
         $this->kernel = new $kernelClass($env, $debug);
         $this->kernel->boot();
+
+        QueryCollector::setSymfonyContainer($this->kernel->getContainer());
     }
 
     private function findKernelClass(string $path): string

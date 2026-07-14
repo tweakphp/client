@@ -41,9 +41,9 @@ abstract class BaseLoader implements LoaderInterface
         return $this->tinker->execute($code);
     }
 
-    public function executeStreaming(string $code): void
+    public function executeStreaming(string $code, callable $onEvent): void
     {
-        $this->tinker->executeStreaming($code);
+        $this->tinker->executeStreaming($code, $onEvent);
     }
 
     public function casters(): array
