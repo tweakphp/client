@@ -20,6 +20,15 @@ class StreamingOutput extends Output
 
     protected function doWrite(string $message, bool $newline): void
     {
+        if ($message === '' && $newline) {
+            return;
+        }
+
+        // PsySH uses this marker for the newline it adds after non-newline output.
+        if ($newline && preg_match('/^<whisper>(?:\x{23ce}|\\\\n)<\/whisper>$/u', $message) === 1) {
+            return;
+        }
+
         ($this->onWrite)($message.($newline ? PHP_EOL : ''));
     }
 }
