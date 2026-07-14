@@ -160,7 +160,7 @@ namespace TweakPHP\Client\Tests {
         {
             mkdir($this->tempDir.'/wp-admin/includes', 0777, true);
             mkdir($this->tempDir.'/wp-includes', 0777, true);
-            file_put_contents($this->tempDir.'/wp-load.php', '<?php 
+            file_put_contents($this->tempDir.'/wp-load.php', '<?php
             if (!function_exists("get_bloginfo")) {
                 function get_bloginfo($show = "") {
                     return "6.2.2";
