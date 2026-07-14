@@ -135,7 +135,7 @@ Examples:
 
 ```bash
 # Laravel
-code=$(printf '%s' 'return App\\Models\\User::query()->latest()->first();' | base64)
+code=$(printf '%s' 'return App\Models\User::query()->latest()->first();' | base64)
 php client.phar /path/to/laravel execute "$code"
 
 # WordPress

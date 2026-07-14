@@ -169,6 +169,7 @@ class TinkerTest extends TestCase
             'completed',
             end($events)['type']
         );
+        $this->assertStringNotContainsString('<whisper>', $output);
     }
 
     public function test_execute_streaming_emits_error_when_a_statement_fails()
