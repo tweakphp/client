@@ -2,6 +2,7 @@
 
 namespace TweakPHP\Client\Tests;
 
+use PhpParser\Error;
 use PHPUnit\Framework\TestCase;
 use Psy\Configuration as ConfigurationAlias;
 use Psy\VersionUpdater\Checker;
@@ -222,7 +223,7 @@ class TinkerTest extends TestCase
             'data'
         ));
 
-        $this->assertSame("  first\\nsecond  ", $output);
+        $this->assertSame('  first\\nsecond  ', $output);
     }
 
     public function test_execute_streaming_emits_exit_code_for_exit(): void
@@ -241,7 +242,7 @@ class TinkerTest extends TestCase
 
     public function test_execute_streaming_propagates_parse_errors(): void
     {
-        $this->expectException(\PhpParser\Error::class);
+        $this->expectException(Error::class);
 
         $this->createTinker()->executeStreaming('echo ;', static function (array $event): void {});
     }
