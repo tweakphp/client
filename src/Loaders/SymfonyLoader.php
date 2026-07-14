@@ -20,10 +20,8 @@ class SymfonyLoader extends ComposerLoader
     {
         parent::__construct($path);
 
-        // Include the Composer autoloader
         require_once $path.'/vendor/autoload.php';
 
-        // Initialize the Symfony Kernel
         $env = $_SERVER['APP_ENV'] ?? 'dev';
         $debug = ($_SERVER['APP_DEBUG'] ?? '1') === '1';
 

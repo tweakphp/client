@@ -70,7 +70,6 @@ namespace TweakPHP\Client\Tests {
             $this->assertTrue(DB::$connectionEnabled);
             $this->assertNotNull(DB::$listener);
 
-            // Simulate query
             $queryObj = new \stdClass;
             $queryObj->sql = 'SELECT * FROM users WHERE id = ?';
             $queryObj->bindings = [1];
@@ -96,7 +95,7 @@ namespace TweakPHP\Client\Tests {
                 ->getMock();
 
             $debugDataHolderMock->method('getData')->willReturnOnConsecutiveCalls(
-                [], // called in start()
+                [],
                 [
                     'default' => [
                         [
@@ -105,7 +104,7 @@ namespace TweakPHP\Client\Tests {
                             'executionMS' => 5.2,
                         ],
                     ],
-                ] // called in stop()
+                ]
             );
 
             $containerMock->method('has')
@@ -148,7 +147,7 @@ namespace TweakPHP\Client\Tests {
                 ->getMock();
 
             $loggerMock = new DebugStack;
-            $loggerMock->queries = []; // empty at start
+            $loggerMock->queries = [];
 
             $doctrineMock->method('getConnections')->willReturn([
                 'default' => $connMock,
@@ -171,7 +170,6 @@ namespace TweakPHP\Client\Tests {
             QueryCollector::setSymfonyContainer($containerMock);
             QueryCollector::start();
 
-            // Simulate query execution during start/stop interval
             $loggerMock->queries[] = [
                 'sql' => 'SELECT * FROM comments',
                 'params' => [1],

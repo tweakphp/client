@@ -73,7 +73,6 @@ namespace TweakPHP\Client\Tests {
             mkdir($this->tempDir.'/bootstrap', 0777, true);
             file_put_contents($this->tempDir.'/vendor/autoload.php', '<?php ');
 
-            // Write a mock Laravel app.php bootstrap
             $appMock = '<?php
             return new class {
                 public function make($abstract) {
@@ -109,7 +108,6 @@ namespace TweakPHP\Client\Tests {
             file_put_contents($this->tempDir.'/vendor/autoload.php', '<?php ');
             file_put_contents($this->tempDir.'/symfony.lock', '{}');
 
-            // Write a mock Symfony kernel
             $kernelMock = '<?php
             namespace App;
             class Kernel {
@@ -164,7 +162,6 @@ namespace TweakPHP\Client\Tests {
             $this->assertInstanceOf(PimcoreLoader::class, $loader);
             $this->assertEquals('Pimcore', $loader->name());
 
-            // version() should throw an OutOfBoundsException because pimcore/pimcore is not actually registered with Composer
             $this->expectException(\OutOfBoundsException::class);
             $loader->version();
         }
@@ -207,7 +204,6 @@ namespace TweakPHP\Client\Tests {
 
         public function test_custom_encoded_loader()
         {
-            // We define a base64 encoded custom loader class.
             $customLoaderCode = '<?php
             class CustomEncodedLoaderTestClass extends \TweakPHP\Client\Loaders\PlainPhpLoader {
                 public function name(): string {
