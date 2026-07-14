@@ -69,6 +69,26 @@ class TinkerTest extends TestCase
         $this->assertEquals('second', $result['output'][0]['output']);
     }
 
+    public function test_execute_propagates_runtime_exceptions(): void
+    {
+        $tinker = $this->createTinker();
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('boom');
+
+        $tinker->execute('throw new RuntimeException("boom");');
+    }
+
+    public function test_execute_preserves_marker_text_and_php_tag_strings(): void
+    {
+        $tinker = $this->createTinker();
+
+        $result = $tinker->execute('echo "before TWEAKPHP_END after"; echo " <?php";');
+
+        $this->assertSame('before TWEAKPHP_END after', $result['output'][0]['output']);
+        $this->assertSame('<?php', $result['output'][1]['output']);
+    }
+
     public function test_query_collection_stops_when_execution_throws()
     {
         $config = new Configuration([
@@ -185,5 +205,27 @@ class TinkerTest extends TestCase
 
         $this->assertSame('error', end($events)['type']);
         $this->assertSame('Execution failed', end($events)['error']['message']);
+    }
+
+    private function createTinker(): Tinker
+    {
+        $config = new Configuration([
+            'configFile' => null,
+        ]);
+        $config->setUpdateCheck(Checker::NEVER);
+        if (method_exists($config, 'setInteractiveMode')) {
+            $config->setInteractiveMode(ConfigurationAlias::INTERACTIVE_MODE_DISABLED);
+        }
+        if (method_exists($config, 'setColorMode')) {
+            $config->setColorMode(ConfigurationAlias::COLOR_MODE_DISABLED);
+        }
+        $config->setRawOutput(false);
+        $config->setTheme([
+            'prompt' => '',
+        ]);
+        $config->setHistoryFile(defined('PHP_WINDOWS_VERSION_BUILD') ? 'null' : '/dev/null');
+        $config->setUsePcntl(false);
+
+        return new Tinker(new CustomOutputModifier, $config);
     }
 }

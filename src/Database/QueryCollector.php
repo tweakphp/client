@@ -15,6 +15,8 @@ class QueryCollector
 
     protected static array $initialCounts = [];
 
+    protected static array $errors = [];
+
     protected static $symfonyContainer = null;
 
     public static function setSymfonyContainer($container): void
@@ -27,6 +29,7 @@ class QueryCollector
         self::$queries = [];
         self::$isLogging = true;
         self::$initialCounts = [];
+        self::$errors = [];
 
         if (! self::$listenerRegistered && class_exists(DB::class)) {
             try {
@@ -44,6 +47,7 @@ class QueryCollector
                 });
                 self::$listenerRegistered = true;
             } catch (\Throwable $e) {
+                self::recordError($e);
             }
         }
 
@@ -66,6 +70,7 @@ class QueryCollector
                     }
                 }
             } catch (\Throwable $e) {
+                self::recordError($e);
             }
         }
     }
@@ -111,9 +116,27 @@ class QueryCollector
                     }
                 }
             } catch (\Throwable $e) {
+                self::recordError($e);
             }
         }
 
         return self::$queries;
+    }
+
+    public static function errors(): array
+    {
+        return self::$errors;
+    }
+
+    private static function recordError(\Throwable $exception): void
+    {
+        $error = [
+            'class' => get_class($exception),
+            'message' => $exception->getMessage(),
+        ];
+
+        if (! in_array($error, self::$errors, true)) {
+            self::$errors[] = $error;
+        }
     }
 }

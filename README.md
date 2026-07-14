@@ -14,10 +14,9 @@ Build the PHAR with production dependencies only:
 ```bash
 make build
 ```
-
-The build removes `vendor`, installs the project dependencies with `--no-dev`,
-installs the pinned Box version in a temporary Composer home, and creates
-`client.phar`. Development dependencies are not included in the PHAR.
+> The build removes `vendor`, installs the project dependencies with `--no-dev`,
+> installs the pinned Box version in a temporary Composer home, and creates
+> `client.phar`. Development dependencies are not included in the PHAR.
 
 ## Command Syntax
 
@@ -78,6 +77,10 @@ If the command fails, it returns `TWEAKPHP_ERROR:` and exits with status `1`:
 TWEAKPHP_ERROR:{"class":"InvalidArgumentException","message":"Invalid Base64-encoded PHP code."}
 ```
 
+User code calling `exit()` or `die()` preserves the requested exit status.
+Instrumentation failures are reported in the optional `query_errors` field rather
+than being silently discarded.
+
 Multiple statements are supported:
 
 ```bash
@@ -110,8 +113,12 @@ Event types:
 - `statement.started`: a statement started
 - `output`: the statement produced output
 - `statement.completed`: a statement finished, with collected queries
-- `error`: a statement or the client failed; the process exits with status `1`
+- `error`: a statement or the client failed; the process exits with status `1`,
+  or with the status requested by `exit()`/`die()`
 - `completed`: all statements finished
+
+An `exit()` or `die()` call emits an `error` event with its exit status and the
+process exits with that status.
 
 ## Supported Projects
 

@@ -110,7 +110,7 @@ namespace TweakPHP\Client\Tests {
 
             $kernelMock = '<?php
             namespace App;
-            class Kernel {
+            class Kernel extends \Symfony\Component\HttpKernel\Kernel {
                 public function __construct($env, $debug) {}
                 public function boot() {}
                 public function getContainer() {
@@ -128,6 +128,32 @@ namespace TweakPHP\Client\Tests {
             $this->assertInstanceOf(SymfonyLoader::class, $loader);
             $this->assertEquals('Symfony', $loader->name());
             $this->assertEquals('6.4.0', $loader->version());
+        }
+
+        public function test_symfony_loader_uses_a_nonstandard_kernel_class(): void
+        {
+            mkdir($this->tempDir.'/vendor', 0777, true);
+            mkdir($this->tempDir.'/src', 0777, true);
+            file_put_contents($this->tempDir.'/vendor/autoload.php', '<?php ');
+            file_put_contents($this->tempDir.'/symfony.lock', '{}');
+
+            $kernelMock = '<?php
+            namespace Custom\Runtime;
+            class Kernel extends \Symfony\Component\HttpKernel\Kernel {
+                public function __construct($env, $debug) {}
+                public function boot() {}
+                public function getContainer() {
+                    return new class {
+                        public function has($id) { return false; }
+                        public function get($id) { return null; }
+                    };
+                }
+            }';
+            file_put_contents($this->tempDir.'/src/Kernel.php', $kernelMock);
+
+            $loader = Loader::load($this->tempDir);
+
+            $this->assertInstanceOf(SymfonyLoader::class, $loader);
         }
 
         public function test_word_press_loader_detection_and_boot()
@@ -204,6 +230,19 @@ namespace TweakPHP\Client\Tests {
             $this->assertInstanceOf(PlainPhpLoader::class, $loader);
             $this->assertEquals('PHP', $loader->name());
             $this->assertEquals('', $loader->version());
+        }
+
+        public function test_plain_php_loader_restores_working_directory(): void
+        {
+            $workingDirectory = getcwd();
+            $loader = new PlainPhpLoader($this->tempDir);
+
+            $this->assertSame($workingDirectory, getcwd());
+
+            $loader->init();
+            $loader->execute('return getcwd();');
+
+            $this->assertSame($workingDirectory, getcwd());
         }
 
         public function test_custom_encoded_loader()

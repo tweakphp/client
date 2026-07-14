@@ -1,6 +1,7 @@
 {
     "name": "tweakphp/client",
     "type": "library",
+    "license": "MIT",
     "autoload": {
         "psr-4": {
             "TweakPHP\\Client\\": "src/"
@@ -19,8 +20,8 @@
     "require": {
         "php": ">=8.1",
         "ext-json": "*",
-        "psy/psysh": "*",
-        "nikic/php-parser": "*",
+        "psy/psysh": "^0.12",
+        "nikic/php-parser": "^5.0",
         "symfony/var-dumper": "^6.4",
         "symfony/console": "^6.4"
     },

@@ -186,5 +186,24 @@ namespace TweakPHP\Client\Tests {
 
             QueryCollector::setSymfonyContainer(null);
         }
+
+        public function test_query_collector_exposes_instrumentation_errors(): void
+        {
+            $containerMock = $this->createMock(ContainerInterface::class);
+            $containerMock->method('has')->willThrowException(new \RuntimeException('container failed'));
+
+            QueryCollector::setSymfonyContainer($containerMock);
+            QueryCollector::start();
+            QueryCollector::stop();
+
+            $this->assertSame([
+                [
+                    'class' => 'RuntimeException',
+                    'message' => 'container failed',
+                ],
+            ], QueryCollector::errors());
+
+            QueryCollector::setSymfonyContainer(null);
+        }
     }
 }

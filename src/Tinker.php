@@ -5,7 +5,7 @@ namespace TweakPHP\Client;
 use PhpParser\ParserFactory;
 use PhpParser\PrettyPrinter\Standard;
 use Psy\Configuration;
-use Psy\ExecutionLoopClosure;
+use Psy\Exception\BreakException;
 use Psy\Shell;
 use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -38,9 +38,7 @@ class Tinker
     {
         self::$statements = [];
 
-        if (strpos($rawPHPCode, '<?php') === false) {
-            $rawPHPCode = "<?php\n".$rawPHPCode;
-        }
+        $rawPHPCode = $this->normalizePHPCode($rawPHPCode);
 
         $parser = (new ParserFactory)->createForHostVersion();
         $prettyPrinter = new Standard;
@@ -61,19 +59,34 @@ class Tinker
 
             self::$statements[$key]['output'] = $output;
             self::$statements[$key]['queries'] = $queries;
+
+            $queryErrors = QueryCollector::errors();
+            if ($queryErrors !== []) {
+                self::$statements[$key]['query_errors'] = $queryErrors;
+            }
         }
 
         $allQueries = [];
+        $allQueryErrors = [];
         foreach (self::$statements as $stmt) {
             if (isset($stmt['queries'])) {
                 $allQueries = array_merge($allQueries, $stmt['queries']);
             }
+            if (isset($stmt['query_errors'])) {
+                $allQueryErrors = array_merge($allQueryErrors, $stmt['query_errors']);
+            }
         }
 
-        return [
+        $result = [
             'output' => self::$statements,
             'queries' => $allQueries,
         ];
+
+        if ($allQueryErrors !== []) {
+            $result['query_errors'] = $allQueryErrors;
+        }
+
+        return $result;
     }
 
     /**
@@ -83,9 +96,7 @@ class Tinker
     {
         self::$statements = [];
 
-        if (strpos($rawPHPCode, '<?php') === false) {
-            $rawPHPCode = "<?php\n".$rawPHPCode;
-        }
+        $rawPHPCode = $this->normalizePHPCode($rawPHPCode);
 
         $parser = (new ParserFactory)->createForHostVersion();
         $prettyPrinter = new Standard;
@@ -118,15 +129,37 @@ class Tinker
         try {
             QueryCollector::start();
             $this->doExecuteStreaming($code, $key, $onEvent);
+        } catch (BreakException $exception) {
+            $event = [
+                'type' => 'error',
+                'index' => $key,
+                'error' => [
+                    'class' => get_class($exception),
+                    'message' => $exception->getMessage(),
+                    'exit_code' => $exception->getCode(),
+                ],
+            ];
+            $queryErrors = QueryCollector::errors();
+            if ($queryErrors !== []) {
+                $event['query_errors'] = $queryErrors;
+            }
+            $onEvent($event);
+
+            return false;
         } catch (\Throwable $exception) {
-            $onEvent([
+            $event = [
                 'type' => 'error',
                 'index' => $key,
                 'error' => [
                     'class' => get_class($exception),
                     'message' => $exception->getMessage(),
                 ],
-            ]);
+            ];
+            $queryErrors = QueryCollector::errors();
+            if ($queryErrors !== []) {
+                $event['query_errors'] = $queryErrors;
+            }
+            $onEvent($event);
 
             return false;
         } finally {
@@ -134,23 +167,30 @@ class Tinker
         }
 
         self::$statements[$key]['queries'] = $queries;
-        $onEvent([
+        $queryErrors = QueryCollector::errors();
+        if ($queryErrors !== []) {
+            self::$statements[$key]['query_errors'] = $queryErrors;
+        }
+
+        $event = [
             'type' => 'statement.completed',
             'index' => $key,
             'queries' => $queries,
-        ]);
+        ];
+        if ($queryErrors !== []) {
+            $event['query_errors'] = $queryErrors;
+        }
+
+        $onEvent($event);
 
         return true;
     }
 
     protected function doExecute(string $code): string
     {
-        $this->shell->addInput($code);
-        $this->shell->addInput("\necho('TWEAKPHP_END'); exit();");
         $this->output = new BufferedOutput;
         $this->shell->setOutput($this->output);
-        $closure = new ExecutionLoopClosure($this->shell);
-        $closure->execute();
+        $this->shell->execute($code, true);
         $result = $this->outputModifier->modify($this->cleanOutput($this->output->fetch()));
 
         return trim($result);
@@ -194,6 +234,15 @@ class Tinker
         $output = preg_replace('/(?s)(<whisper.*?<\/whisper>)|INFO  Ctrl\+D\./ms', '$2', $output);
 
         return trim($output);
+    }
+
+    protected function normalizePHPCode(string $rawPHPCode): string
+    {
+        if (preg_match('/^\s*<\?php(?:\s|$)/', $rawPHPCode) !== 1) {
+            return "<?php\n".$rawPHPCode;
+        }
+
+        return $rawPHPCode;
     }
 
     public function getShell(): Shell

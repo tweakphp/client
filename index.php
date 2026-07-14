@@ -1,5 +1,6 @@
 <?php
 
+use Psy\Exception\BreakException;
 use TweakPHP\Client\Cli;
 use TweakPHP\Client\Loader;
 
@@ -82,17 +83,19 @@ try {
             break;
         case 'execute-stream':
             $streamFailed = false;
-            $loader->executeStreaming($code, static function (array $event) use (&$streamFailed, $writeStreamEvent): void {
+            $streamExitCode = 1;
+            $loader->executeStreaming($code, static function (array $event) use (&$streamFailed, &$streamExitCode, $writeStreamEvent): void {
                 $streamFailed = $streamFailed || ($event['type'] ?? null) === 'error';
+                $streamExitCode = $event['error']['exit_code'] ?? $streamExitCode;
                 $writeStreamEvent($event);
             });
 
             if ($streamFailed) {
-                exit(1);
+                exit($streamExitCode);
             }
             break;
     }
 } catch (Throwable $exception) {
     $writeError($exception);
-    exit(1);
+    exit($exception instanceof BreakException ? $exception->getCode() : 1);
 }

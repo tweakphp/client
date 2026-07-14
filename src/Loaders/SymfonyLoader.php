@@ -34,9 +34,24 @@ class SymfonyLoader extends ComposerLoader
 
     private function findKernelClass(string $path): string
     {
-        require_once $path.'/src/Kernel.php';
+        $kernelFile = $path.'/src/Kernel.php';
+        require_once $kernelFile;
 
-        return 'App\\Kernel';
+        foreach (get_declared_classes() as $class) {
+            try {
+                $reflection = new \ReflectionClass($class);
+            } catch (\ReflectionException) {
+                continue;
+            }
+
+            if ($reflection->getFileName() === realpath($kernelFile) &&
+                is_a($class, Kernel::class, true) &&
+                $class !== Kernel::class) {
+                return $class;
+            }
+        }
+
+        throw new \RuntimeException('Unable to find a Symfony kernel class in src/Kernel.php.');
     }
 
     public function name(): string
