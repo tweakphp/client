@@ -33,7 +33,6 @@ class QueryCollector
 
         if (! self::$listenerRegistered && class_exists(DB::class)) {
             try {
-                DB::connection()->enableQueryLog();
                 DB::listen(function ($query) {
                     if (! self::$isLogging) {
                         return;

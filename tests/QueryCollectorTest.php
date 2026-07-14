@@ -67,7 +67,6 @@ namespace TweakPHP\Client\Tests {
         {
             QueryCollector::start();
 
-            $this->assertTrue(DB::$connectionEnabled);
             $this->assertNotNull(DB::$listener);
 
             $queryObj = new \stdClass;
@@ -85,6 +84,24 @@ namespace TweakPHP\Client\Tests {
             $this->assertEquals([1], $queries[0]['bindings']);
             $this->assertEquals(12.34, $queries[0]['time']);
             $this->assertEquals('mysql', $queries[0]['connection']);
+        }
+
+        public function test_query_collector_captures_queries_from_secondary_connections(): void
+        {
+            QueryCollector::start();
+
+            $queryObj = new \stdClass;
+            $queryObj->sql = 'SELECT * FROM reports';
+            $queryObj->bindings = [];
+            $queryObj->time = 3.1;
+            $queryObj->connectionName = 'reporting';
+
+            DB::triggerQuery($queryObj);
+
+            $queries = QueryCollector::stop();
+
+            $this->assertCount(1, $queries);
+            $this->assertSame('reporting', $queries[0]['connection']);
         }
 
         public function test_query_collector_with_symfony_doctrine3()
