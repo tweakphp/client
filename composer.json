@@ -2,6 +2,7 @@
     "name": "tweakphp/client",
     "type": "library",
     "license": "MIT",
+    "description": "PHAR client for executing PHP code inside a project",
     "autoload": {
         "psr-4": {
             "TweakPHP\\Client\\": "src/"
@@ -37,9 +38,5 @@
     },
     "scripts": {
         "test": "phpunit tests/"
-    },
-    "config": {
-        "platform": {
-        }
     }
 }
