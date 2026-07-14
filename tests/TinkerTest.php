@@ -208,6 +208,44 @@ class TinkerTest extends TestCase
         $this->assertSame('Execution failed', end($events)['error']['message']);
     }
 
+    public function test_execute_streaming_preserves_user_output_whitespace(): void
+    {
+        $tinker = $this->createTinker();
+        $events = [];
+
+        $tinker->executeStreaming("echo '  first\\nsecond  ';", function (array $event) use (&$events): void {
+            $events[] = $event;
+        });
+
+        $output = implode('', array_column(
+            array_filter($events, fn (array $event): bool => $event['type'] === 'output'),
+            'data'
+        ));
+
+        $this->assertSame("  first\\nsecond  ", $output);
+    }
+
+    public function test_execute_streaming_emits_exit_code_for_exit(): void
+    {
+        $tinker = $this->createTinker();
+        $events = [];
+
+        $tinker->executeStreaming('exit(7);', function (array $event) use (&$events): void {
+            $events[] = $event;
+        });
+
+        $error = end($events);
+        $this->assertSame('error', $error['type']);
+        $this->assertSame(7, $error['error']['exit_code']);
+    }
+
+    public function test_execute_streaming_propagates_parse_errors(): void
+    {
+        $this->expectException(\PhpParser\Error::class);
+
+        $this->createTinker()->executeStreaming('echo ;', static function (array $event): void {});
+    }
+
     private function createTinker(): Tinker
     {
         $config = new Configuration([

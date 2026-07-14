@@ -202,9 +202,6 @@ class Tinker
     protected function doExecuteStreaming(string $code, int $index, callable $onEvent): void
     {
         $this->output = new StreamingOutput(function (string $chunk) use ($index, $onEvent): void {
-            $chunk = $this->outputModifier->modify($chunk);
-            $chunk = $this->cleanOutput($chunk);
-
             if ($chunk === '') {
                 return;
             }
