@@ -40,7 +40,7 @@ class SymfonyLoader extends ComposerLoader
         foreach (get_declared_classes() as $class) {
             try {
                 $reflection = new \ReflectionClass($class);
-            } catch (\ReflectionException) {
+            } catch (\ReflectionException $exception) {
                 continue;
             }
 

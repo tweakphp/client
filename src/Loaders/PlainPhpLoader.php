@@ -28,7 +28,7 @@ class PlainPhpLoader extends BaseLoader
         });
     }
 
-    private function executeInProjectDirectory(callable $callback): mixed
+    private function executeInProjectDirectory(callable $callback)
     {
         $previousWorkingDirectory = getcwd();
 

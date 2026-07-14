@@ -6,11 +6,15 @@ use Symfony\Component\Console\Output\Output;
 
 class StreamingOutput extends Output
 {
+    private $onWrite;
+
     /**
      * @param  callable(string): void  $onWrite
      */
-    public function __construct(private $onWrite)
+    public function __construct(callable $onWrite)
     {
+        $this->onWrite = $onWrite;
+
         parent::__construct(self::VERBOSITY_NORMAL, false);
     }
 

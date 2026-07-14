@@ -5,7 +5,7 @@ to execute PHP code inside a project.
 
 ## Requirements
 
-- PHP 8.1 or higher
+- PHP 7.4 or higher
 
 ## Build
 
