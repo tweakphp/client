@@ -14,9 +14,18 @@ Build the PHAR with production dependencies only:
 ```bash
 make build
 ```
-> The build removes `vendor`, installs the project dependencies with `--no-dev`,
-> installs the pinned Box version in a temporary Composer home, and creates
-> `client.phar`. Development dependencies are not included in the PHAR.
+The build removes `vendor`, installs the project dependencies with `--no-dev`,
+installs the pinned Box version in a temporary Composer home, and creates
+`client.phar`. Development dependencies are not included in the PHAR.
+
+Release builds resolve the dependencies against the PHP runtime that will
+execute each PHAR. PHP 7.4 and 8.0 use Symfony 5.4, while newer PHP versions
+can use the compatible Symfony 6.4, 7.x, or 8.x release. To do the same for a
+local build, run:
+
+```bash
+make build UPDATE_LOCK=true
+```
 
 ## Command Syntax
 

@@ -59,7 +59,7 @@ jobs:
           tools: composer
 
       - name: Build PHAR
-        run: make build PHP_BIN="$RUNTIME_PHP" BOX_PHP="$(command -v php)" COMPOSER_BIN="$COMPOSER_BIN"
+        run: make build UPDATE_LOCK=true PHP_BIN="$RUNTIME_PHP" BOX_PHP="$(command -v php)" COMPOSER_BIN="$COMPOSER_BIN"
         env:
           COMPOSER_HOME: ${{ runner.temp }}/composer
 
