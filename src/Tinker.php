@@ -77,8 +77,6 @@ class Tinker
     }
 
     /**
-     * Execute each statement and emit events as output becomes available.
-     *
      * @param  callable(array): void  $onEvent
      */
     public function executeStreaming(string $rawPHPCode, callable $onEvent): void
@@ -107,22 +105,42 @@ class Tinker
                 'code' => $code,
             ]);
 
-            QueryCollector::start();
-            try {
-                $this->doExecuteStreaming($code, $key, $onEvent);
-            } finally {
-                $queries = QueryCollector::stop();
+            if (! $this->executeStreamingStatement($code, $key, $onEvent)) {
+                return;
             }
-
-            self::$statements[$key]['queries'] = $queries;
-            $onEvent([
-                'type' => 'statement.completed',
-                'index' => $key,
-                'queries' => $queries,
-            ]);
         }
 
         $onEvent(['type' => 'completed']);
+    }
+
+    protected function executeStreamingStatement(string $code, int $key, callable $onEvent): bool
+    {
+        try {
+            QueryCollector::start();
+            $this->doExecuteStreaming($code, $key, $onEvent);
+        } catch (\Throwable $exception) {
+            $onEvent([
+                'type' => 'error',
+                'index' => $key,
+                'error' => [
+                    'class' => get_class($exception),
+                    'message' => $exception->getMessage(),
+                ],
+            ]);
+
+            return false;
+        } finally {
+            $queries = QueryCollector::stop();
+        }
+
+        self::$statements[$key]['queries'] = $queries;
+        $onEvent([
+            'type' => 'statement.completed',
+            'index' => $key,
+            'queries' => $queries,
+        ]);
+
+        return true;
     }
 
     protected function doExecute(string $code): string

@@ -150,4 +150,40 @@ class TinkerTest extends TestCase
             end($events)['type']
         );
     }
+
+    public function test_execute_streaming_emits_error_when_a_statement_fails()
+    {
+        $config = new Configuration([
+            'configFile' => null,
+        ]);
+        $config->setUpdateCheck(Checker::NEVER);
+        if (method_exists($config, 'setInteractiveMode')) {
+            $config->setInteractiveMode(ConfigurationAlias::INTERACTIVE_MODE_DISABLED);
+        }
+        if (method_exists($config, 'setColorMode')) {
+            $config->setColorMode(ConfigurationAlias::COLOR_MODE_DISABLED);
+        }
+        $config->setRawOutput(false);
+        $config->setTheme([
+            'prompt' => '',
+        ]);
+        $config->setHistoryFile(defined('PHP_WINDOWS_VERSION_BUILD') ? 'null' : '/dev/null');
+        $config->setUsePcntl(false);
+
+        $tinker = new class(new CustomOutputModifier, $config) extends Tinker
+        {
+            protected function doExecuteStreaming(string $code, int $index, callable $onEvent): void
+            {
+                throw new \RuntimeException('Execution failed');
+            }
+        };
+        $events = [];
+
+        $tinker->executeStreaming("echo 'failure';", function (array $event) use (&$events): void {
+            $events[] = $event;
+        });
+
+        $this->assertSame('error', end($events)['type']);
+        $this->assertSame('Execution failed', end($events)['error']['message']);
+    }
 }

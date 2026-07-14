@@ -182,10 +182,14 @@ namespace TweakPHP\Client\Tests {
         public function test_composer_loader_does_not_reload_the_client_autoloader()
         {
             mkdir($this->tempDir.'/vendor', 0777, true);
+            mkdir($this->tempDir.'/vendor/composer', 0777, true);
             file_put_contents($this->tempDir.'/composer.json', json_encode([
                 'name' => 'tweakphp/client',
             ]));
+            $className = 'ComposerAutoloaderInit'.str_replace('.', '', uniqid('', true));
+            file_put_contents($this->tempDir.'/vendor/composer/autoload_real.php', '<?php class '.$className.' {}');
             file_put_contents($this->tempDir.'/vendor/autoload.php', '<?php throw new RuntimeException("autoload should not be loaded");');
+            eval('class '.$className.' {}');
 
             $loader = new ComposerLoader($this->tempDir);
 

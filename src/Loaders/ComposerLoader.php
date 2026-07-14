@@ -11,21 +11,28 @@ class ComposerLoader extends BaseLoader
 
     public function __construct(string $path)
     {
-        if (! $this->isClientProject($path)) {
-            require $path.'/vendor/autoload.php';
+        $autoloadPath = $path.'/vendor/autoload.php';
+
+        if (! $this->isAutoloaderLoaded($autoloadPath)) {
+            require_once $autoloadPath;
         }
     }
 
-    private function isClientProject(string $path): bool
+    private function isAutoloaderLoaded(string $autoloadPath): bool
     {
-        if (! class_exists('Composer\\InstalledVersions') || ! file_exists($path.'/composer.json')) {
+        $autoloadRealPath = dirname($autoloadPath).'/composer/autoload_real.php';
+
+        if (! file_exists($autoloadRealPath)) {
             return false;
         }
 
-        $composer = json_decode(file_get_contents($path.'/composer.json'), true);
-        $rootPackage = \Composer\InstalledVersions::getRootPackage();
+        $contents = file_get_contents($autoloadRealPath);
 
-        return is_array($composer) && ($composer['name'] ?? null) === ($rootPackage['name'] ?? null);
+        if ($contents === false || preg_match('/class ([A-Za-z0-9_]+)\s*\{/', $contents, $matches) !== 1) {
+            return false;
+        }
+
+        return class_exists($matches[1], false);
     }
 
     public function name(): string

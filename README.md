@@ -15,9 +15,9 @@ Build the PHAR with production dependencies only:
 make build
 ```
 
-The build temporarily installs the development dependencies to run Box, then
-removes `vendor`, installs dependencies with `--no-dev`, and creates
-`client.phar`.
+The build removes `vendor`, installs the project dependencies with `--no-dev`,
+installs the pinned Box version in a temporary Composer home, and creates
+`client.phar`. Development dependencies are not included in the PHAR.
 
 ## Command Syntax
 
@@ -72,6 +72,12 @@ result prefixed with `TWEAKPHP_RESULT:`:
 TWEAKPHP_RESULT:{"output":[{"line":2,"code":"echo \"Hello\";","output":"Hello","queries":[]}],"queries":[]}
 ```
 
+If the command fails, it returns `TWEAKPHP_ERROR:` and exits with status `1`:
+
+```text
+TWEAKPHP_ERROR:{"class":"InvalidArgumentException","message":"Invalid Base64-encoded PHP code."}
+```
+
 Multiple statements are supported:
 
 ```bash
@@ -104,6 +110,7 @@ Event types:
 - `statement.started`: a statement started
 - `output`: the statement produced output
 - `statement.completed`: a statement finished, with collected queries
+- `error`: a statement or the client failed; the process exits with status `1`
 - `completed`: all statements finished
 
 ## Supported Projects
