@@ -20,7 +20,3 @@ build:
 	$(PHP_BIN) $(COMPOSER_BIN) $(COMPOSER_ACTION) --no-dev --prefer-dist --optimize-autoloader --no-interaction --no-progress $(COMPOSER_ACTION_FLAGS)
 	COMPOSER_HOME="$(BOX_COMPOSER_HOME)" $(BOX_PHP) $(COMPOSER_BIN) global require humbug/box:$(BOX_VERSION) --with-all-dependencies --no-interaction
 	$(BOX_PHP) $(BOX_BIN) compile
-
-pint:
-	$(PHP_BIN) $(COMPOSER_BIN) global require laravel/pint --with-all-dependencies --no-interaction
-	$(PHP_BIN) $(COMPOSER_BIN) global exec pint -- --test

@@ -124,11 +124,7 @@ class TinkerTest extends TestCase
             $this->assertSame('Execution failed', $exception->getMessage());
         }
 
-        $reflection = new \ReflectionClass(QueryCollector::class);
-        $logging = $reflection->getProperty('isLogging');
-        $logging->setAccessible(true);
-
-        $this->assertFalse($logging->getValue());
+        $this->assertSame([], QueryCollector::errors());
     }
 
     public function test_execute_streaming_emits_output_for_each_statement()

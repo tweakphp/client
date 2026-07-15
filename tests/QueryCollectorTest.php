@@ -59,12 +59,21 @@ namespace TweakPHP\Client\Tests {
     use Illuminate\Support\Facades\DB;
     use PHPUnit\Framework\TestCase;
     use Symfony\Component\DependencyInjection\ContainerInterface;
+    use TweakPHP\Client\Database\LaravelQueryProvider;
     use TweakPHP\Client\Database\QueryCollector;
+    use TweakPHP\Client\Database\QueryProviderInterface;
+    use TweakPHP\Client\Database\SymfonyDoctrineQueryProvider;
 
     class QueryCollectorTest extends TestCase
     {
+        protected function setUp(): void
+        {
+            QueryCollector::reset();
+        }
+
         public function test_query_collector_with_laravel_db()
         {
+            QueryCollector::register(new LaravelQueryProvider);
             QueryCollector::start();
 
             $this->assertNotNull(DB::$listener);
@@ -88,6 +97,7 @@ namespace TweakPHP\Client\Tests {
 
         public function test_query_collector_captures_queries_from_secondary_connections(): void
         {
+            QueryCollector::register(new LaravelQueryProvider);
             QueryCollector::start();
 
             $queryObj = new \stdClass;
@@ -135,7 +145,7 @@ namespace TweakPHP\Client\Tests {
                     ['doctrine.debug_data_holder', $debugDataHolderMock],
                 ]);
 
-            QueryCollector::setSymfonyContainer($containerMock);
+            QueryCollector::register(new SymfonyDoctrineQueryProvider($containerMock));
             QueryCollector::start();
             $queries = QueryCollector::stop();
 
@@ -145,7 +155,6 @@ namespace TweakPHP\Client\Tests {
             $this->assertEquals(5.2, $queries[0]['time']);
             $this->assertEquals('default', $queries[0]['connection']);
 
-            QueryCollector::setSymfonyContainer(null);
         }
 
         public function test_query_collector_with_symfony_doctrine2()
@@ -184,7 +193,7 @@ namespace TweakPHP\Client\Tests {
                     ['doctrine', $doctrineMock],
                 ]);
 
-            QueryCollector::setSymfonyContainer($containerMock);
+            QueryCollector::register(new SymfonyDoctrineQueryProvider($containerMock));
             QueryCollector::start();
 
             $loggerMock->queries[] = [
@@ -201,7 +210,6 @@ namespace TweakPHP\Client\Tests {
             $this->assertEquals(1.5, $queries[0]['time']);
             $this->assertEquals('default', $queries[0]['connection']);
 
-            QueryCollector::setSymfonyContainer(null);
         }
 
         public function test_query_collector_exposes_instrumentation_errors(): void
@@ -209,7 +217,7 @@ namespace TweakPHP\Client\Tests {
             $containerMock = $this->createMock(ContainerInterface::class);
             $containerMock->method('has')->willThrowException(new \RuntimeException('container failed'));
 
-            QueryCollector::setSymfonyContainer($containerMock);
+            QueryCollector::register(new SymfonyDoctrineQueryProvider($containerMock));
             QueryCollector::start();
             QueryCollector::stop();
 
@@ -220,7 +228,31 @@ namespace TweakPHP\Client\Tests {
                 ],
             ], QueryCollector::errors());
 
-            QueryCollector::setSymfonyContainer(null);
+        }
+
+        public function test_query_collector_orchestrates_multiple_providers(): void
+        {
+            $first = $this->createMock(QueryProviderInterface::class);
+            $second = $this->createMock(QueryProviderInterface::class);
+
+            $first->expects($this->once())->method('start');
+            $first->expects($this->once())->method('stop')->willReturn([
+                ['sql' => 'SELECT 1'],
+            ]);
+            $second->expects($this->once())->method('start');
+            $second->expects($this->once())->method('stop')->willReturn([
+                ['sql' => 'SELECT 2'],
+            ]);
+
+            QueryCollector::register($first);
+            QueryCollector::register($second);
+
+            QueryCollector::start();
+
+            $this->assertSame([
+                ['sql' => 'SELECT 1'],
+                ['sql' => 'SELECT 2'],
+            ], QueryCollector::stop());
         }
     }
 }
