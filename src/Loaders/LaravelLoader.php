@@ -4,6 +4,8 @@ namespace TweakPHP\Client\Loaders;
 
 use Illuminate\Support\Env;
 use Laravel\Tinker\ClassAliasAutoloader;
+use TweakPHP\Client\Database\LaravelQueryProvider;
+use TweakPHP\Client\Database\QueryCollector;
 
 class LaravelLoader extends ComposerLoader
 {
@@ -19,6 +21,8 @@ class LaravelLoader extends ComposerLoader
         parent::__construct($path);
         $this->app = require_once $path.'/bootstrap/app.php';
         $this->app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
+
+        QueryCollector::register(new LaravelQueryProvider);
     }
 
     public function init(): void

@@ -3,6 +3,8 @@
 namespace TweakPHP\Client\Loaders;
 
 use Symfony\Component\HttpKernel\Kernel;
+use TweakPHP\Client\Database\QueryCollector;
+use TweakPHP\Client\Database\SymfonyDoctrineQueryProvider;
 
 class SymfonyLoader extends ComposerLoader
 {
@@ -19,23 +21,40 @@ class SymfonyLoader extends ComposerLoader
     {
         parent::__construct($path);
 
-        // Include the Composer autoloader
         require_once $path.'/vendor/autoload.php';
 
-        // Initialize the Symfony Kernel
         $env = $_SERVER['APP_ENV'] ?? 'dev';
         $debug = ($_SERVER['APP_DEBUG'] ?? '1') === '1';
 
         $kernelClass = $this->findKernelClass($path);
         $this->kernel = new $kernelClass($env, $debug);
         $this->kernel->boot();
+
+        QueryCollector::register(
+            new SymfonyDoctrineQueryProvider($this->kernel->getContainer())
+        );
     }
 
     private function findKernelClass(string $path): string
     {
-        require_once $path.'/src/Kernel.php';
+        $kernelFile = $path.'/src/Kernel.php';
+        require_once $kernelFile;
 
-        return 'App\\Kernel';
+        foreach (get_declared_classes() as $class) {
+            try {
+                $reflection = new \ReflectionClass($class);
+            } catch (\ReflectionException $exception) {
+                continue;
+            }
+
+            if ($reflection->getFileName() === realpath($kernelFile) &&
+                is_a($class, Kernel::class, true) &&
+                $class !== Kernel::class) {
+                return $class;
+            }
+        }
+
+        throw new \RuntimeException('Unable to find a Symfony kernel class in src/Kernel.php.');
     }
 
     public function name(): string

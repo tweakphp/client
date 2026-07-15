@@ -30,7 +30,6 @@ class WordPressLoader extends BaseLoader
                 return get_bloginfo('version');
             }
         } catch (Throwable $e) {
-            //
         }
 
         return '';

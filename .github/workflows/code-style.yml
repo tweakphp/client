@@ -33,8 +33,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-php-
 
-      - name: Install Pint
-        run: composer global require laravel/pint
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
 
       - name: Run Pint
-        run: pint --test
+        run: vendor/bin/pint --test src tests
+
+      - name: Run tests
+        run: composer test
