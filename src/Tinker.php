@@ -126,11 +126,13 @@ class Tinker
 
     protected function executeStreamingStatement(string $code, int $key, callable $onEvent): bool
     {
+        $error = null;
+
         try {
             QueryCollector::start();
             $this->doExecuteStreaming($code, $key, $onEvent);
         } catch (BreakException $exception) {
-            $event = [
+            $error = [
                 'type' => 'error',
                 'index' => $key,
                 'error' => [
@@ -139,15 +141,8 @@ class Tinker
                     'exit_code' => $exception->getCode(),
                 ],
             ];
-            $queryErrors = QueryCollector::errors();
-            if ($queryErrors !== []) {
-                $event['query_errors'] = $queryErrors;
-            }
-            $onEvent($event);
-
-            return false;
         } catch (\Throwable $exception) {
-            $event = [
+            $error = [
                 'type' => 'error',
                 'index' => $key,
                 'error' => [
@@ -155,15 +150,23 @@ class Tinker
                     'message' => $exception->getMessage(),
                 ],
             ];
-            $queryErrors = QueryCollector::errors();
-            if ($queryErrors !== []) {
-                $event['query_errors'] = $queryErrors;
-            }
-            $onEvent($event);
-
-            return false;
         } finally {
             $queries = QueryCollector::stop();
+        }
+
+        if ($error !== null) {
+            self::$statements[$key]['queries'] = $queries;
+
+            $error['queries'] = $queries;
+            $queryErrors = QueryCollector::errors();
+            if ($queryErrors !== []) {
+                self::$statements[$key]['query_errors'] = $queryErrors;
+                $error['query_errors'] = $queryErrors;
+            }
+
+            $onEvent($error);
+
+            return false;
         }
 
         self::$statements[$key]['queries'] = $queries;

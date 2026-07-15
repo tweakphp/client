@@ -7,6 +7,7 @@ use PHPUnit\Framework\TestCase;
 use Psy\Configuration as ConfigurationAlias;
 use Psy\VersionUpdater\Checker;
 use TweakPHP\Client\Database\QueryCollector;
+use TweakPHP\Client\Database\QueryProviderInterface;
 use TweakPHP\Client\OutputModifiers\CustomOutputModifier;
 use TweakPHP\Client\Psy\Configuration;
 use TweakPHP\Client\Tinker;
@@ -197,12 +198,65 @@ class TinkerTest extends TestCase
         };
         $events = [];
 
-        $tinker->executeStreaming("echo 'failure';", function (array $event) use (&$events): void {
-            $events[] = $event;
-        });
+        try {
+            $tinker->executeStreaming("echo 'failure';", function (array $event) use (&$events): void {
+                $events[] = $event;
+            });
+        } finally {
+            QueryCollector::reset();
+        }
 
         $this->assertSame('error', end($events)['type']);
         $this->assertSame('Execution failed', end($events)['error']['message']);
+    }
+
+    public function test_execute_streaming_includes_query_collection_errors_in_failure_event(): void
+    {
+        $config = new Configuration([
+            'configFile' => null,
+        ]);
+        $config->setUpdateCheck(Checker::NEVER);
+        if (method_exists($config, 'setInteractiveMode')) {
+            $config->setInteractiveMode(ConfigurationAlias::INTERACTIVE_MODE_DISABLED);
+        }
+        if (method_exists($config, 'setColorMode')) {
+            $config->setColorMode(ConfigurationAlias::COLOR_MODE_DISABLED);
+        }
+        $config->setRawOutput(false);
+        $config->setTheme([
+            'prompt' => '',
+        ]);
+        $config->setHistoryFile(defined('PHP_WINDOWS_VERSION_BUILD') ? 'null' : '/dev/null');
+        $config->setUsePcntl(false);
+
+        $tinker = new class(new CustomOutputModifier, $config) extends Tinker
+        {
+            protected function doExecuteStreaming(string $code, int $index, callable $onEvent): void
+            {
+                throw new \RuntimeException('Execution failed');
+            }
+        };
+        $provider = $this->createMock(QueryProviderInterface::class);
+        $provider->method('stop')->willThrowException(new \RuntimeException('query collection failed'));
+        QueryCollector::register($provider);
+        $events = [];
+
+        try {
+            $tinker->executeStreaming("echo 'failure';", function (array $event) use (&$events): void {
+                $events[] = $event;
+            });
+        } finally {
+            QueryCollector::reset();
+        }
+
+        $error = end($events);
+        $this->assertSame('error', $error['type']);
+        $this->assertSame([
+            [
+                'class' => 'RuntimeException',
+                'message' => 'query collection failed',
+            ],
+        ], $error['query_errors']);
     }
 
     public function test_execute_streaming_preserves_user_output_whitespace(): void
