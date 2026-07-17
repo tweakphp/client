@@ -40,7 +40,10 @@ class Tinker
 
         $rawPHPCode = $this->normalizePHPCode($rawPHPCode);
 
-        $parser = (new ParserFactory)->createForHostVersion();
+        $parserFactory = new ParserFactory;
+        $parser = method_exists($parserFactory, 'createForHostVersion')
+            ? $parserFactory->createForHostVersion()
+            : $parserFactory->create(ParserFactory::PREFER_PHP7);
         $prettyPrinter = new Standard;
         foreach ($parser->parse($rawPHPCode) as $key => $stmt) {
             $code = $prettyPrinter->prettyPrint([$stmt]);
@@ -98,7 +101,10 @@ class Tinker
 
         $rawPHPCode = $this->normalizePHPCode($rawPHPCode);
 
-        $parser = (new ParserFactory)->createForHostVersion();
+        $parserFactory = new ParserFactory;
+        $parser = method_exists($parserFactory, 'createForHostVersion')
+            ? $parserFactory->createForHostVersion()
+            : $parserFactory->create(ParserFactory::PREFER_PHP7);
         $prettyPrinter = new Standard;
 
         foreach ($parser->parse($rawPHPCode) as $key => $stmt) {

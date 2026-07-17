@@ -47,7 +47,8 @@ class SymfonyLoader extends ComposerLoader
                 continue;
             }
 
-            if ($reflection->getFileName() === realpath($kernelFile) &&
+            $fileName = $reflection->getFileName();
+            if ($fileName && realpath($fileName) === realpath($kernelFile) &&
                 is_a($class, Kernel::class, true) &&
                 $class !== Kernel::class) {
                 return $class;
