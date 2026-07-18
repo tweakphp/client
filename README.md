@@ -134,6 +134,7 @@ process exits with that status.
 The client detects the project type automatically:
 
 - Laravel: `vendor/autoload.php` and `bootstrap/app.php`
+- Magento: `bin/magento`
 - Symfony: `vendor/autoload.php`, `symfony.lock`, and `src/Kernel.php`
 - WordPress: `wp-load.php`
 - Pimcore: `vendor/pimcore/pimcore`
@@ -146,6 +147,10 @@ Examples:
 # Laravel
 code=$(printf '%s' 'return App\Models\User::query()->latest()->first();' | base64)
 php client.phar /path/to/laravel execute "$code"
+
+# Magento
+code=$(printf '%s' 'echo Magento\Framework\App\ObjectManager::getInstance()->get(Magento\Catalog\Model\ProductRepository::class)->getById(1)->getName();' | base64)
+php client.phar /path/to/magento execute "$code"
 
 # WordPress
 code=$(printf '%s' 'return get_option("blogname");' | base64)
