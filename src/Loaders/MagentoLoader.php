@@ -18,7 +18,7 @@ class MagentoLoader extends ComposerLoader
         parent::__construct($path);
 
         require $path.'/app/bootstrap.php';
-        if (!in_array('phar', stream_get_wrappers())) {
+        if (! in_array('phar', stream_get_wrappers())) {
             stream_wrapper_restore('phar');
         }
 
@@ -34,6 +34,7 @@ class MagentoLoader extends ComposerLoader
     {
         $objectManager = ObjectManager::getInstance();
         $metadata = $objectManager->get(ProductMetadataInterface::class);
+
         return $metadata->getEdition().' '.$metadata->getVersion();
     }
 }
