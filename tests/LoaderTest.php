@@ -28,6 +28,7 @@ namespace TweakPHP\Client\Tests {
     use TweakPHP\Client\Loader;
     use TweakPHP\Client\Loaders\ComposerLoader;
     use TweakPHP\Client\Loaders\LaravelLoader;
+    use TweakPHP\Client\Loaders\MagentoLoader;
     use TweakPHP\Client\Loaders\PimcoreLoader;
     use TweakPHP\Client\Loaders\PlainPhpLoader;
     use TweakPHP\Client\Loaders\SymfonyLoader;
@@ -99,6 +100,38 @@ namespace TweakPHP\Client\Tests {
 
             $casters = $loader->casters();
             $this->assertArrayHasKey('Illuminate\Support\Collection', $casters);
+        }
+
+        public function test_magento_loader_detection_and_boot()
+        {
+            mkdir($this->tempDir.'/app', 0777, true);
+            mkdir($this->tempDir.'/bin', 0777, true);
+            mkdir($this->tempDir.'/vendor', 0777, true);
+            touch($this->tempDir.'/bin/magento');
+            file_put_contents($this->tempDir.'/vendor/autoload.php', '<?php ');
+
+            $bootstrapMock = '<?php
+            namespace Magento\Framework\App {
+                class Bootstrap {
+                    public static function create() {}
+                }
+                class ObjectManager {
+                    public static function getInstance() { return new static; }
+                    public function get() { return new ProductMetadata; }
+                }
+                class ProductMetadata {
+                    public function getEdition() { return "Magento Community"; }
+                    public function getVersion() { return "2.4.9"; }
+                }
+            }';
+            file_put_contents($this->tempDir.'/app/bootstrap.php', $bootstrapMock);
+
+            $this->assertTrue(MagentoLoader::supports($this->tempDir));
+
+            $loader = Loader::load($this->tempDir);
+            $this->assertInstanceOf(MagentoLoader::class, $loader);
+            $this->assertEquals('Magento', $loader->name());
+            $this->assertEquals('Magento Community 2.4.9', $loader->version());
         }
 
         public function test_symfony_loader_detection_and_boot()

@@ -5,6 +5,7 @@ namespace TweakPHP\Client;
 use TweakPHP\Client\Loaders\ComposerLoader;
 use TweakPHP\Client\Loaders\LaravelLoader;
 use TweakPHP\Client\Loaders\LoaderInterface;
+use TweakPHP\Client\Loaders\MagentoLoader;
 use TweakPHP\Client\Loaders\PimcoreLoader;
 use TweakPHP\Client\Loaders\PlainPhpLoader;
 use TweakPHP\Client\Loaders\SymfonyLoader;
@@ -27,6 +28,10 @@ class Loader
 
         if (LaravelLoader::supports($path)) {
             return new LaravelLoader($path);
+        }
+
+        if (MagentoLoader::supports($path)) {
+            return new MagentoLoader($path);
         }
 
         if (SymfonyLoader::supports($path)) {
