@@ -41,8 +41,6 @@ class Tinker
         $this->shell = $this->createShell($this->output, $config);
 
         $this->outputModifier = $outputModifier;
-
-        $this->registerVarDumperHandler($config);
     }
 
     public function execute(string $rawPHPCode): array
@@ -51,70 +49,66 @@ class Tinker
 
         $this->registerVarDumperHandler($this->config);
 
-        $rawPHPCode = $this->normalizePHPCode($rawPHPCode);
+        try {
+            $rawPHPCode = $this->normalizePHPCode($rawPHPCode);
 
-        $parserFactory = new ParserFactory;
-        $parser = method_exists($parserFactory, 'createForHostVersion')
-            ? $parserFactory->createForHostVersion()
-            : $parserFactory->create(ParserFactory::PREFER_PHP7);
-        $prettyPrinter = new Standard;
-        foreach ($parser->parse($rawPHPCode) as $key => $stmt) {
-            $code = $prettyPrinter->prettyPrint([$stmt]);
-            $executableCode = $stmt instanceof Expression
-                ? $prettyPrinter->prettyPrintExpr($stmt->expr)
-                : $code;
+            $parserFactory = new ParserFactory;
+            $parser = method_exists($parserFactory, 'createForHostVersion')
+                ? $parserFactory->createForHostVersion()
+                : $parserFactory->create(ParserFactory::PREFER_PHP7);
+            $prettyPrinter = new Standard;
+            foreach ($parser->parse($rawPHPCode) as $key => $stmt) {
+                $code = $prettyPrinter->prettyPrint([$stmt]);
+                $executableCode = $stmt instanceof Expression
+                    ? $prettyPrinter->prettyPrintExpr($stmt->expr)
+                    : $code;
 
-            self::$current = $key;
-            self::$statements[] = [
-                'line' => $stmt->getStartLine(),
-                'code' => $code,
+                self::$current = $key;
+                self::$statements[] = [
+                    'line' => $stmt->getStartLine(),
+                    'code' => $code,
+                ];
+
+                QueryCollector::start();
+                try {
+                    $output = $this->doExecute($executableCode);
+                } finally {
+                    $queries = QueryCollector::stop();
+                    self::$statements[$key]['queries'] = $queries;
+                }
+
+                self::$statements[$key]['output'] = $output;
+
+                $queryErrors = QueryCollector::errors();
+                if ($queryErrors !== []) {
+                    self::$statements[$key]['query_errors'] = $queryErrors;
+                }
+            }
+
+            $allQueries = [];
+            $allQueryErrors = [];
+            foreach (self::$statements as $stmt) {
+                if (isset($stmt['queries'])) {
+                    $allQueries = array_merge($allQueries, $stmt['queries']);
+                }
+                if (isset($stmt['query_errors'])) {
+                    $allQueryErrors = array_merge($allQueryErrors, $stmt['query_errors']);
+                }
+            }
+
+            $result = [
+                'output' => self::$statements,
+                'queries' => $allQueries,
             ];
 
-            QueryCollector::start();
-            try {
-                $output = $this->doExecute($executableCode);
-            } finally {
-                $queries = QueryCollector::stop();
-                self::$statements[$key]['queries'] = $queries;
+            if ($allQueryErrors !== []) {
+                $result['query_errors'] = $allQueryErrors;
             }
 
-            if ($output !== '') {
-                if (isset(self::$statements[$key]['output']) && self::$statements[$key]['output'] !== '' && self::$statements[$key]['output'] !== $output) {
-                    self::$statements[$key]['output'] .= "\n".$output;
-                } else {
-                    self::$statements[$key]['output'] = $output;
-                }
-            } elseif (! isset(self::$statements[$key]['output'])) {
-                self::$statements[$key]['output'] = '';
-            }
-
-            $queryErrors = QueryCollector::errors();
-            if ($queryErrors !== []) {
-                self::$statements[$key]['query_errors'] = $queryErrors;
-            }
+            return $result;
+        } finally {
+            $this->restoreVarDumperHandler();
         }
-
-        $allQueries = [];
-        $allQueryErrors = [];
-        foreach (self::$statements as $stmt) {
-            if (isset($stmt['queries'])) {
-                $allQueries = array_merge($allQueries, $stmt['queries']);
-            }
-            if (isset($stmt['query_errors'])) {
-                $allQueryErrors = array_merge($allQueryErrors, $stmt['query_errors']);
-            }
-        }
-
-        $result = [
-            'output' => self::$statements,
-            'queries' => $allQueries,
-        ];
-
-        if ($allQueryErrors !== []) {
-            $result['query_errors'] = $allQueryErrors;
-        }
-
-        return $result;
     }
 
     /**
@@ -126,39 +120,43 @@ class Tinker
 
         $this->registerVarDumperHandler($this->config);
 
-        $rawPHPCode = $this->normalizePHPCode($rawPHPCode);
+        try {
+            $rawPHPCode = $this->normalizePHPCode($rawPHPCode);
 
-        $parserFactory = new ParserFactory;
-        $parser = method_exists($parserFactory, 'createForHostVersion')
-            ? $parserFactory->createForHostVersion()
-            : $parserFactory->create(ParserFactory::PREFER_PHP7);
-        $prettyPrinter = new Standard;
+            $parserFactory = new ParserFactory;
+            $parser = method_exists($parserFactory, 'createForHostVersion')
+                ? $parserFactory->createForHostVersion()
+                : $parserFactory->create(ParserFactory::PREFER_PHP7);
+            $prettyPrinter = new Standard;
 
-        foreach ($parser->parse($rawPHPCode) as $key => $stmt) {
-            $code = $prettyPrinter->prettyPrint([$stmt]);
-            $executableCode = $stmt instanceof Expression
-                ? $prettyPrinter->prettyPrintExpr($stmt->expr)
-                : $code;
+            foreach ($parser->parse($rawPHPCode) as $key => $stmt) {
+                $code = $prettyPrinter->prettyPrint([$stmt]);
+                $executableCode = $stmt instanceof Expression
+                    ? $prettyPrinter->prettyPrintExpr($stmt->expr)
+                    : $code;
 
-            self::$current = $key;
-            self::$statements[] = [
-                'line' => $stmt->getStartLine(),
-                'code' => $code,
-            ];
+                self::$current = $key;
+                self::$statements[] = [
+                    'line' => $stmt->getStartLine(),
+                    'code' => $code,
+                ];
 
-            $onEvent([
-                'type' => 'statement.started',
-                'index' => $key,
-                'line' => $stmt->getStartLine(),
-                'code' => $code,
-            ]);
+                $onEvent([
+                    'type' => 'statement.started',
+                    'index' => $key,
+                    'line' => $stmt->getStartLine(),
+                    'code' => $code,
+                ]);
 
-            if (! $this->executeStreamingStatement($executableCode, $key, $onEvent)) {
-                return;
+                if (! $this->executeStreamingStatement($executableCode, $key, $onEvent)) {
+                    return;
+                }
             }
-        }
 
-        $onEvent(['type' => 'completed']);
+            $onEvent(['type' => 'completed']);
+        } finally {
+            $this->restoreVarDumperHandler();
+        }
     }
 
     protected function executeStreamingStatement(string $code, int $key, callable $onEvent): bool
@@ -237,7 +235,7 @@ class Tinker
         if (! self::$dumpOccurred && $return !== null && ! ($return instanceof NoReturnValue)) {
             $presented = $this->config->getPresenter()->present($return);
             if ($output !== '') {
-                $output .= "\n".$presented;
+                $output .= \PHP_EOL.$presented;
             } else {
                 $output = $presented;
             }
@@ -314,20 +312,19 @@ class Tinker
         VarDumper::setHandler(function ($var) use ($config) {
             self::$dumpOccurred = true;
             $output = $config->getPresenter()->present($var);
-            if (isset(self::$statements[self::$current])) {
-                if (isset(self::$statements[self::$current]['output']) && self::$statements[self::$current]['output'] !== '') {
-                    self::$statements[self::$current]['output'] .= "\n".$output;
-                } else {
-                    self::$statements[self::$current]['output'] = $output;
-                }
-            }
-
-            if ($this->output instanceof StreamingOutput) {
-                $this->output->write($output, true);
-            }
+            $this->output->write($output, true);
 
             return $output;
         });
+    }
+
+    protected function restoreVarDumperHandler(): void
+    {
+        if (! class_exists(VarDumper::class)) {
+            return;
+        }
+
+        VarDumper::setHandler(null);
     }
 
     public function getShell(): Shell

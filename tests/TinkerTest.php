@@ -415,6 +415,58 @@ class TinkerTest extends TestCase
         $this->assertSame('42', $result['output'][1]['output']);
     }
 
+    public function test_execute_preserves_echo_dump_order_in_single_statement(): void
+    {
+        $tinker = $this->createTinker();
+
+        ob_start();
+        $result = $tinker->execute('if (true) { echo "A\n"; dump("B"); }');
+        $stdout = ob_get_clean();
+
+        $this->assertSame('', $stdout);
+        $this->assertSame("A\n\"B\"", $result['output'][0]['output']);
+    }
+
+    public function test_execute_streaming_preserves_echo_dump_order(): void
+    {
+        $tinker = $this->createTinker();
+        $events = [];
+
+        ob_start();
+        $tinker->executeStreaming('if (true) { echo "A\n"; dump("B"); }', function (array $event) use (&$events): void {
+            $events[] = $event;
+        });
+        $stdout = ob_get_clean();
+
+        $this->assertSame('', $stdout);
+
+        $outputEvents = array_filter($events, fn (array $event): bool => $event['type'] === 'output');
+        $output = implode('', array_column($outputEvents, 'data'));
+
+        $this->assertStringContainsString('A', $output);
+        $this->assertStringContainsString('"B"', $output);
+        $this->assertLessThan(strpos($output, '"B"'), strpos($output, 'A'));
+    }
+
+    public function test_execute_restores_var_dumper_handler_after_execution(): void
+    {
+        $tinker = $this->createTinker();
+
+        $result = $tinker->execute('1;');
+        $outputBefore = $result['output'][0]['output'];
+
+        // The default handler must be back in place: VAR_DUMPER_FORMAT=html
+        // makes it dump to php://output so it can be captured with ob_start.
+        $_SERVER['VAR_DUMPER_FORMAT'] = 'html';
+        ob_start();
+        dump('AFTER_EXECUTE');
+        $captured = ob_get_clean();
+        unset($_SERVER['VAR_DUMPER_FORMAT']);
+
+        $this->assertStringContainsString('AFTER_EXECUTE', $captured);
+        $this->assertSame($outputBefore, Tinker::$statements[0]['output']);
+    }
+
     private function createTinker(): Tinker
     {
         $config = new Configuration([
