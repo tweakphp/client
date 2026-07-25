@@ -2,22 +2,29 @@
 
 namespace TweakPHP\Client;
 
+use PhpParser\Node\Stmt\Expression;
 use PhpParser\ParserFactory;
 use PhpParser\PrettyPrinter\Standard;
+use Psy\CodeCleaner\NoReturnValue;
 use Psy\Configuration;
 use Psy\Exception\BreakException;
 use Psy\Shell;
 use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\VarDumper\VarDumper;
 use TweakPHP\Client\Database\QueryCollector;
 use TweakPHP\Client\Output\StreamingOutput;
 use TweakPHP\Client\OutputModifiers\OutputModifier;
 
 class Tinker
 {
+    public static bool $dumpOccurred = false;
+
     protected OutputInterface $output;
 
     protected Shell $shell;
+
+    protected Configuration $config;
 
     protected OutputModifier $outputModifier;
 
@@ -29,14 +36,20 @@ class Tinker
     {
         $this->output = new BufferedOutput;
 
+        $this->config = $config;
+
         $this->shell = $this->createShell($this->output, $config);
 
         $this->outputModifier = $outputModifier;
+
+        $this->registerVarDumperHandler($config);
     }
 
     public function execute(string $rawPHPCode): array
     {
         self::$statements = [];
+
+        $this->registerVarDumperHandler($this->config);
 
         $rawPHPCode = $this->normalizePHPCode($rawPHPCode);
 
@@ -47,6 +60,10 @@ class Tinker
         $prettyPrinter = new Standard;
         foreach ($parser->parse($rawPHPCode) as $key => $stmt) {
             $code = $prettyPrinter->prettyPrint([$stmt]);
+            $executableCode = $stmt instanceof Expression
+                ? $prettyPrinter->prettyPrintExpr($stmt->expr)
+                : $code;
+
             self::$current = $key;
             self::$statements[] = [
                 'line' => $stmt->getStartLine(),
@@ -55,13 +72,21 @@ class Tinker
 
             QueryCollector::start();
             try {
-                $output = $this->doExecute($code);
+                $output = $this->doExecute($executableCode);
             } finally {
                 $queries = QueryCollector::stop();
                 self::$statements[$key]['queries'] = $queries;
             }
 
-            self::$statements[$key]['output'] = $output;
+            if ($output !== '') {
+                if (isset(self::$statements[$key]['output']) && self::$statements[$key]['output'] !== '' && self::$statements[$key]['output'] !== $output) {
+                    self::$statements[$key]['output'] .= "\n".$output;
+                } else {
+                    self::$statements[$key]['output'] = $output;
+                }
+            } elseif (! isset(self::$statements[$key]['output'])) {
+                self::$statements[$key]['output'] = '';
+            }
 
             $queryErrors = QueryCollector::errors();
             if ($queryErrors !== []) {
@@ -99,6 +124,8 @@ class Tinker
     {
         self::$statements = [];
 
+        $this->registerVarDumperHandler($this->config);
+
         $rawPHPCode = $this->normalizePHPCode($rawPHPCode);
 
         $parserFactory = new ParserFactory;
@@ -109,6 +136,10 @@ class Tinker
 
         foreach ($parser->parse($rawPHPCode) as $key => $stmt) {
             $code = $prettyPrinter->prettyPrint([$stmt]);
+            $executableCode = $stmt instanceof Expression
+                ? $prettyPrinter->prettyPrintExpr($stmt->expr)
+                : $code;
+
             self::$current = $key;
             self::$statements[] = [
                 'line' => $stmt->getStartLine(),
@@ -122,7 +153,7 @@ class Tinker
                 'code' => $code,
             ]);
 
-            if (! $this->executeStreamingStatement($code, $key, $onEvent)) {
+            if (! $this->executeStreamingStatement($executableCode, $key, $onEvent)) {
                 return;
             }
         }
@@ -197,12 +228,22 @@ class Tinker
 
     protected function doExecute(string $code): string
     {
+        self::$dumpOccurred = false;
         $this->output = new BufferedOutput;
         $this->shell->setOutput($this->output);
-        $this->shell->execute($code, true);
-        $result = $this->outputModifier->modify($this->cleanOutput($this->output->fetch()));
+        $return = $this->shell->execute($code, true);
+        $output = $this->outputModifier->modify($this->cleanOutput($this->output->fetch()));
 
-        return trim($result);
+        if (! self::$dumpOccurred && $return !== null && ! ($return instanceof NoReturnValue)) {
+            $presented = $this->config->getPresenter()->present($return);
+            if ($output !== '') {
+                $output .= "\n".$presented;
+            } else {
+                $output = $presented;
+            }
+        }
+
+        return trim($output);
     }
 
     /**
@@ -210,6 +251,7 @@ class Tinker
      */
     protected function doExecuteStreaming(string $code, int $index, callable $onEvent): void
     {
+        self::$dumpOccurred = false;
         $this->output = new StreamingOutput(function (string $chunk) use ($index, $onEvent): void {
             if ($chunk === '') {
                 return;
@@ -222,7 +264,18 @@ class Tinker
             ]);
         });
         $this->shell->setOutput($this->output);
-        $this->shell->execute($code, true);
+        $return = $this->shell->execute($code, true);
+
+        if (! self::$dumpOccurred && $return !== null && ! ($return instanceof NoReturnValue)) {
+            $output = $this->config->getPresenter()->present($return);
+            if ($output !== '') {
+                $onEvent([
+                    'type' => 'output',
+                    'index' => $index,
+                    'data' => $output,
+                ]);
+            }
+        }
     }
 
     protected function createShell(OutputInterface $output, Configuration $config): Shell
@@ -250,6 +303,31 @@ class Tinker
         }
 
         return $rawPHPCode;
+    }
+
+    protected function registerVarDumperHandler(Configuration $config): void
+    {
+        if (! class_exists(VarDumper::class)) {
+            return;
+        }
+
+        VarDumper::setHandler(function ($var) use ($config) {
+            self::$dumpOccurred = true;
+            $output = $config->getPresenter()->present($var);
+            if (isset(self::$statements[self::$current])) {
+                if (isset(self::$statements[self::$current]['output']) && self::$statements[self::$current]['output'] !== '') {
+                    self::$statements[self::$current]['output'] .= "\n".$output;
+                } else {
+                    self::$statements[self::$current]['output'] = $output;
+                }
+            }
+
+            if ($this->output instanceof StreamingOutput) {
+                $this->output->write($output, true);
+            }
+
+            return $output;
+        });
     }
 
     public function getShell(): Shell

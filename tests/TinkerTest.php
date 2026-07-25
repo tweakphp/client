@@ -297,6 +297,124 @@ class TinkerTest extends TestCase
         $this->createTinker()->executeStreaming('echo ;', static function (array $event): void {});
     }
 
+    public function test_execute_captures_symfony_var_dumper_output(): void
+    {
+        $tinker = $this->createTinker();
+
+        ob_start();
+        $result = $tinker->execute('dump("hello");');
+        $stdout = ob_get_clean();
+
+        $this->assertSame('', $stdout);
+        $this->assertNotEmpty($result['output']);
+        $this->assertSame('"hello"', $result['output'][0]['output']);
+        $this->assertStringContainsString('hello', $result['output'][0]['html']);
+    }
+
+    public function test_execute_evaluates_expressions_ending_with_semicolon(): void
+    {
+        $tinker = $this->createTinker();
+
+        $result = $tinker->execute('"hello";');
+
+        $this->assertNotEmpty($result['output']);
+        $this->assertSame('"hello"', $result['output'][0]['output']);
+        $this->assertStringContainsString('hello', $result['output'][0]['html']);
+    }
+
+    public function test_execute_handles_multiple_dumps_in_single_statement(): void
+    {
+        $tinker = $this->createTinker();
+
+        ob_start();
+        $result = $tinker->execute('foreach (["one", "two"] as $item) { dump($item); }');
+        $stdout = ob_get_clean();
+
+        $this->assertSame('', $stdout);
+        $this->assertNotEmpty($result['output']);
+        $this->assertStringContainsString('"one"', $result['output'][0]['output']);
+        $this->assertStringContainsString('"two"', $result['output'][0]['output']);
+        $this->assertStringContainsString('one', $result['output'][0]['html']);
+        $this->assertStringContainsString('two', $result['output'][0]['html']);
+    }
+
+    public function test_execute_handles_mixed_statements_with_dump_and_expressions(): void
+    {
+        $tinker = $this->createTinker();
+
+        $result = $tinker->execute('$x = 10; dump($x); $x + 5;');
+
+        $this->assertCount(3, $result['output']);
+        $this->assertSame('10', $result['output'][0]['output']);
+        $this->assertSame('10', $result['output'][1]['output']);
+        $this->assertSame('15', $result['output'][2]['output']);
+    }
+
+    public function test_execute_streaming_emits_dump_output(): void
+    {
+        $tinker = $this->createTinker();
+        $events = [];
+
+        ob_start();
+        $tinker->executeStreaming('dump("stream_test");', function (array $event) use (&$events): void {
+            $events[] = $event;
+        });
+        $stdout = ob_get_clean();
+
+        $this->assertSame('', $stdout);
+
+        $outputEvents = array_filter($events, fn (array $event): bool => $event['type'] === 'output');
+        $output = implode('', array_column($outputEvents, 'data'));
+
+        $this->assertStringContainsString('stream_test', $output);
+    }
+
+    public function test_execute_streaming_handles_multiple_dumps_and_mixed_outputs(): void
+    {
+        $tinker = $this->createTinker();
+        $events = [];
+
+        ob_start();
+        $tinker->executeStreaming('foreach (["foo", "bar"] as $item) { dump($item); }', function (array $event) use (&$events): void {
+            $events[] = $event;
+        });
+        $stdout = ob_get_clean();
+
+        $this->assertSame('', $stdout);
+
+        $outputEvents = array_filter($events, fn (array $event): bool => $event['type'] === 'output');
+        $output = implode('', array_column($outputEvents, 'data'));
+
+        $this->assertStringContainsString('foo', $output);
+        $this->assertStringContainsString('bar', $output);
+    }
+
+    public function test_execute_streaming_emits_expression_output(): void
+    {
+        $tinker = $this->createTinker();
+        $events = [];
+
+        $tinker->executeStreaming('"stream_expr";', function (array $event) use (&$events): void {
+            $events[] = $event;
+        });
+
+        $outputEvents = array_filter($events, fn (array $event): bool => $event['type'] === 'output');
+        $output = implode('', array_column($outputEvents, 'data'));
+
+        $this->assertStringContainsString('stream_expr', $output);
+    }
+
+    public function test_execute_handles_non_expression_statements(): void
+    {
+        $tinker = $this->createTinker();
+
+        $result = $tinker->execute('function myTestFunc() { return 42; } myTestFunc();');
+
+        $this->assertCount(2, $result['output']);
+        $this->assertSame('', $result['output'][0]['output']);
+        $this->assertSame('42', $result['output'][1]['output']);
+    }
+
     private function createTinker(): Tinker
     {
         $config = new Configuration([
