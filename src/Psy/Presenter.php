@@ -46,7 +46,11 @@ class Presenter extends \Psy\VarDumper\Presenter
         });
 
         if (isset(Tinker::$statements[Tinker::$current])) {
-            Tinker::$statements[Tinker::$current]['html'] = $output;
+            if (isset(Tinker::$statements[Tinker::$current]['html']) && Tinker::$statements[Tinker::$current]['html'] !== '') {
+                Tinker::$statements[Tinker::$current]['html'] .= \PHP_EOL.$output;
+            } else {
+                Tinker::$statements[Tinker::$current]['html'] = $output;
+            }
         }
 
         return parent::present($value, $depth, $options);
