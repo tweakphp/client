@@ -58,10 +58,10 @@ class Tinker
                 $output = $this->doExecute($code);
             } finally {
                 $queries = QueryCollector::stop();
+                self::$statements[$key]['queries'] = $queries;
             }
 
             self::$statements[$key]['output'] = $output;
-            self::$statements[$key]['queries'] = $queries;
 
             $queryErrors = QueryCollector::errors();
             if ($queryErrors !== []) {

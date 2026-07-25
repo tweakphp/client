@@ -254,5 +254,34 @@ namespace TweakPHP\Client\Tests {
                 ['sql' => 'SELECT 2'],
             ], QueryCollector::stop());
         }
+
+        public function test_query_collector_get_captured_queries_accumulates_across_starts_and_stops(): void
+        {
+            QueryCollector::register(new LaravelQueryProvider);
+
+            QueryCollector::start();
+            $queryObj1 = new \stdClass;
+            $queryObj1->sql = 'SELECT * FROM users WHERE id = 1';
+            $queryObj1->bindings = [];
+            $queryObj1->time = 0.5;
+            $queryObj1->connectionName = 'sqlite';
+            DB::triggerQuery($queryObj1);
+            QueryCollector::stop();
+
+            QueryCollector::start();
+            $queryObj2 = new \stdClass;
+            $queryObj2->sql = 'SELECT * FROM users WHERE id = 999';
+            $queryObj2->bindings = [];
+            $queryObj2->time = 0.4;
+            $queryObj2->connectionName = 'sqlite';
+            DB::triggerQuery($queryObj2);
+
+            // Without calling stop() manually on statement 2, getCapturedQueries() flushes and returns both queries
+            $allQueries = QueryCollector::getCapturedQueries();
+
+            $this->assertCount(2, $allQueries);
+            $this->assertSame('SELECT * FROM users WHERE id = 1', $allQueries[0]['sql']);
+            $this->assertSame('SELECT * FROM users WHERE id = 999', $allQueries[1]['sql']);
+        }
     }
 }

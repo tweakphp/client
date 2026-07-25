@@ -2,7 +2,9 @@
 
 use Psy\Exception\BreakException;
 use TweakPHP\Client\Cli;
+use TweakPHP\Client\Database\QueryCollector;
 use TweakPHP\Client\Loader;
+use TweakPHP\Client\Tinker;
 
 require __DIR__.'/vendor/autoload.php';
 
@@ -31,10 +33,23 @@ $writeStreamEvent = static function (array $event): void {
 };
 
 $writeError = static function (Throwable $exception) use ($command, $writeStreamEvent): void {
+    $line = null;
+    if (isset(Tinker::$statements[Tinker::$current]['line'])) {
+        $line = Tinker::$statements[Tinker::$current]['line'];
+    } elseif ($exception->getLine() > 0) {
+        $line = $exception->getLine();
+    }
+
     $error = [
         'class' => get_class($exception),
         'message' => $exception->getMessage(),
     ];
+
+    if ($line !== null) {
+        $error['line'] = $line;
+    }
+
+    $error['queries'] = QueryCollector::getCapturedQueries();
 
     if ($command === 'execute-stream') {
         $writeStreamEvent([

@@ -42,6 +42,9 @@ class LaravelQueryProvider implements QueryProviderInterface
     {
         $this->isLogging = false;
 
-        return $this->queries;
+        $queries = $this->queries;
+        $this->queries = [];
+
+        return $queries;
     }
 }
