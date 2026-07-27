@@ -120,7 +120,9 @@ TWEAKPHP_STREAM:{"type":"completed"}
 Event types:
 
 - `statement.started`: a statement started
-- `output`: the statement produced output
+- `output`: the statement produced output. Presenter output also includes an
+  `html` field containing the rendered HTML fragment; plain `echo` output only
+  includes `data`.
 - `statement.completed`: a statement finished, with collected queries
 - `error`: a statement or the client failed; the process exits with status `1`,
   or with the status requested by `exit()`/`die()`

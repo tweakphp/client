@@ -367,6 +367,9 @@ class TinkerTest extends TestCase
         $output = implode('', array_column($outputEvents, 'data'));
 
         $this->assertStringContainsString('stream_test', $output);
+        $this->assertCount(1, $outputEvents);
+        $this->assertArrayHasKey('html', reset($outputEvents));
+        $this->assertStringContainsString('stream_test', reset($outputEvents)['html']);
     }
 
     public function test_execute_streaming_handles_multiple_dumps_and_mixed_outputs(): void
@@ -402,6 +405,9 @@ class TinkerTest extends TestCase
         $output = implode('', array_column($outputEvents, 'data'));
 
         $this->assertStringContainsString('stream_expr', $output);
+        $this->assertCount(1, $outputEvents);
+        $this->assertArrayHasKey('html', reset($outputEvents));
+        $this->assertStringContainsString('stream_expr', reset($outputEvents)['html']);
     }
 
     public function test_execute_handles_non_expression_statements(): void
@@ -446,6 +452,10 @@ class TinkerTest extends TestCase
         $this->assertStringContainsString('A', $output);
         $this->assertStringContainsString('"B"', $output);
         $this->assertLessThan(strpos($output, '"B"'), strpos($output, 'A'));
+
+        $dumpEvent = array_values(array_filter($outputEvents, fn (array $event): bool => strpos($event['data'], '"B"') !== false))[0];
+        $this->assertArrayHasKey('html', $dumpEvent);
+        $this->assertStringContainsString('B', $dumpEvent['html']);
     }
 
     public function test_execute_restores_var_dumper_handler_after_execution(): void

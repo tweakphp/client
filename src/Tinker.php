@@ -246,20 +246,30 @@ class Tinker
 
     /**
      * @param  callable(array): void  $onEvent
+     *
+     * @throws BreakException
      */
     protected function doExecuteStreaming(string $code, int $index, callable $onEvent): void
     {
         self::$dumpOccurred = false;
-        $this->output = new StreamingOutput(function (string $chunk) use ($index, $onEvent): void {
+        $htmlLength = 0;
+        $this->output = new StreamingOutput(function (string $chunk) use ($index, $onEvent, &$htmlLength): void {
             if ($chunk === '') {
                 return;
             }
 
-            $onEvent([
+            $event = [
                 'type' => 'output',
                 'index' => $index,
                 'data' => $chunk,
-            ]);
+            ];
+
+            $html = $this->newStreamingHtml($index, $htmlLength);
+            if ($html !== null) {
+                $event['html'] = $html;
+            }
+
+            $onEvent($event);
         });
         $this->shell->setOutput($this->output);
         $return = $this->shell->execute($code, true);
@@ -267,13 +277,38 @@ class Tinker
         if (! self::$dumpOccurred && $return !== null && ! ($return instanceof NoReturnValue)) {
             $output = $this->config->getPresenter()->present($return);
             if ($output !== '') {
-                $onEvent([
+                $event = [
                     'type' => 'output',
                     'index' => $index,
                     'data' => $output,
-                ]);
+                ];
+
+                $html = $this->newStreamingHtml($index, $htmlLength);
+                if ($html !== null) {
+                    $event['html'] = $html;
+                }
+
+                $onEvent($event);
             }
         }
+    }
+
+    protected function newStreamingHtml(int $index, int &$htmlLength): ?string
+    {
+        $statementHtml = self::$statements[$index]['html'] ?? '';
+        $statementHtmlLength = strlen($statementHtml);
+        if ($statementHtmlLength <= $htmlLength) {
+            return null;
+        }
+
+        $html = substr($statementHtml, $htmlLength);
+        $htmlLength = $statementHtmlLength;
+
+        if ($htmlLength > 0 && substr($html, 0, strlen(PHP_EOL)) === PHP_EOL) {
+            $html = substr($html, strlen(PHP_EOL));
+        }
+
+        return $html !== '' ? $html : null;
     }
 
     protected function createShell(OutputInterface $output, Configuration $config): Shell
