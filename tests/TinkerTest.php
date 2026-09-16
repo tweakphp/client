@@ -311,6 +311,17 @@ class TinkerTest extends TestCase
         $this->assertStringContainsString('hello', $result['output'][0]['html']);
     }
 
+    public function test_execute_does_not_escape_array_operators_in_output(): void
+    {
+        $tinker = $this->createTinker();
+
+        $result = $tinker->execute("['id' => 1, 'email' => 'test@example.com'];");
+
+        $this->assertNotEmpty($result['output']);
+        $this->assertStringContainsString('=>', $result['output'][0]['output']);
+        $this->assertStringNotContainsString('=\>', $result['output'][0]['output']);
+    }
+
     public function test_execute_evaluates_expressions_ending_with_semicolon(): void
     {
         $tinker = $this->createTinker();

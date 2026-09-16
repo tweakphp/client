@@ -53,6 +53,6 @@ class Presenter extends \Psy\VarDumper\Presenter
             }
         }
 
-        return parent::present($value, $depth, $options);
+        return parent::present($value, $depth, $options | self::RAW);
     }
 }
