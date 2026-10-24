@@ -65,6 +65,8 @@ $writeError = static function (Throwable $exception) use ($command, $writeStream
 
 $customLoader = Cli::getArgument('loader');
 try {
+    QueryCollector::enable(filter_var(Cli::getArgument('query-log'), FILTER_VALIDATE_BOOL));
+
     $loader = Loader::load($arguments[1], $customLoader ?: null);
 
     if ($loader === null) {

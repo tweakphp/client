@@ -238,6 +238,7 @@ class TinkerTest extends TestCase
         };
         $provider = $this->createMock(QueryProviderInterface::class);
         $provider->method('stop')->willThrowException(new \RuntimeException('query collection failed'));
+        QueryCollector::enable(true);
         QueryCollector::register($provider);
         $events = [];
 

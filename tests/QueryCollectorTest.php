@@ -69,6 +69,7 @@ namespace TweakPHP\Client\Tests {
         protected function setUp(): void
         {
             QueryCollector::reset();
+            QueryCollector::enable(true);
         }
 
         public function test_query_collector_with_laravel_db()
@@ -282,6 +283,54 @@ namespace TweakPHP\Client\Tests {
             $this->assertCount(2, $allQueries);
             $this->assertSame('SELECT * FROM users WHERE id = 1', $allQueries[0]['sql']);
             $this->assertSame('SELECT * FROM users WHERE id = 999', $allQueries[1]['sql']);
+        }
+
+        public function test_query_collector_is_disabled_by_default(): void
+        {
+            QueryCollector::reset();
+
+            $this->assertFalse(QueryCollector::isEnabled());
+        }
+
+        public function test_query_collector_ignores_providers_when_disabled(): void
+        {
+            QueryCollector::enable(false);
+
+            $provider = $this->createMock(QueryProviderInterface::class);
+            $provider->expects($this->never())->method('start');
+            $provider->expects($this->never())->method('stop');
+
+            QueryCollector::register($provider);
+            QueryCollector::start();
+
+            $this->assertSame([], QueryCollector::stop());
+            $this->assertSame([], QueryCollector::errors());
+            $this->assertSame([], QueryCollector::getCapturedQueries());
+        }
+
+        public function test_query_collector_ignores_registration_from_before_enable(): void
+        {
+            QueryCollector::enable(false);
+
+            $ignoredProvider = $this->createMock(QueryProviderInterface::class);
+            $ignoredProvider->expects($this->never())->method('start');
+            $ignoredProvider->expects($this->never())->method('stop');
+            QueryCollector::register($ignoredProvider);
+
+            QueryCollector::enable(true);
+
+            $provider = $this->createMock(QueryProviderInterface::class);
+            $provider->expects($this->once())->method('start');
+            $provider->expects($this->once())->method('stop')->willReturn([
+                ['sql' => 'SELECT 1'],
+            ]);
+            QueryCollector::register($provider);
+
+            QueryCollector::start();
+
+            $this->assertSame([
+                ['sql' => 'SELECT 1'],
+            ], QueryCollector::stop());
         }
     }
 }

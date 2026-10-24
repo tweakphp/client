@@ -4,6 +4,8 @@ namespace TweakPHP\Client\Database;
 
 class QueryCollector
 {
+    protected static bool $enabled = false;
+
     /** @var QueryProviderInterface[] */
     protected static array $providers = [];
 
@@ -13,13 +15,28 @@ class QueryCollector
 
     protected static array $errors = [];
 
+    public static function enable(bool $enabled = true): void
+    {
+        self::$enabled = $enabled;
+    }
+
+    public static function isEnabled(): bool
+    {
+        return self::$enabled;
+    }
+
     public static function register(QueryProviderInterface $provider): void
     {
+        if (! self::$enabled) {
+            return;
+        }
+
         self::$providers[] = $provider;
     }
 
     public static function reset(): void
     {
+        self::$enabled = false;
         self::$providers = [];
         self::$queries = [];
         self::$allCapturedQueries = [];
@@ -28,6 +45,10 @@ class QueryCollector
 
     public static function start(): void
     {
+        if (! self::$enabled) {
+            return;
+        }
+
         self::$queries = [];
         self::$errors = [];
 
@@ -42,6 +63,10 @@ class QueryCollector
 
     public static function stop(): array
     {
+        if (! self::$enabled) {
+            return [];
+        }
+
         self::$queries = [];
 
         foreach (self::$providers as $provider) {
