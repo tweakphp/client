@@ -50,6 +50,18 @@ php client.phar <project-directory> execute <base64-code>
 php client.phar <project-directory> execute-stream <base64-code>
 ```
 
+Available options:
+
+- `--query-log=<bool>`: enable database query collection for `execute` and
+  `execute-stream`. Accepts `true`/`false`, `1`/`0`, `on`/`off`, and
+  `yes`/`no`. Query logging is disabled by default: no query listeners are
+  attached to the project's database, and every `queries` field in the output
+  is an empty array.
+
+```bash
+php client.phar /path/to/project execute "$code" --query-log=true
+```
+
 ## Check Project Info
 
 `info` reports the detected project type, project version, and PHP version:
