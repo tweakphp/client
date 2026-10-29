@@ -63,6 +63,15 @@ $writeError = static function (Throwable $exception) use ($command, $writeStream
     echo 'TWEAKPHP_ERROR:'.json_encode($error, JSON_INVALID_UTF8_SUBSTITUTE).PHP_EOL;
 };
 
+if ($command === 'execute-stream') {
+    $started = ['type' => 'started'];
+    $pid = getmypid();
+    if ($pid !== false && $pid > 0) {
+        $started['pid'] = (int) $pid;
+    }
+    $writeStreamEvent($started);
+}
+
 $customLoader = Cli::getArgument('loader');
 try {
     QueryCollector::enable(filter_var(Cli::getArgument('query-log'), FILTER_VALIDATE_BOOL));
