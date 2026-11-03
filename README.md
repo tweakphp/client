@@ -123,6 +123,7 @@ The command writes one JSON event per line, each prefixed with
 `TWEAKPHP_STREAM:`:
 
 ```text
+TWEAKPHP_STREAM:{"type":"started","pid":1234}
 TWEAKPHP_STREAM:{"type":"statement.started","index":0,"line":2,"code":"echo \"First\";"}
 TWEAKPHP_STREAM:{"type":"output","index":0,"data":"First"}
 TWEAKPHP_STREAM:{"type":"statement.completed","index":0,"queries":[]}
@@ -131,6 +132,10 @@ TWEAKPHP_STREAM:{"type":"completed"}
 
 Event types:
 
+- `started`: the client started. It is emitted as the first line, before the
+  project's framework bootstraps, so callers can stop the process even when
+  bootstrapping hangs. It includes the client process id as `pid`; `pid` is
+  omitted when unavailable.
 - `statement.started`: a statement started
 - `output`: the statement produced output. Presenter output also includes an
   `html` field containing the rendered HTML fragment; plain `echo` output only
