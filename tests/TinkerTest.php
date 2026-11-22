@@ -489,6 +489,25 @@ class TinkerTest extends TestCase
         $this->assertSame($outputBefore, Tinker::$statements[0]['output']);
     }
 
+    public function test_execute_and_streaming_preserve_tag_like_strings_in_dump(): void
+    {
+        $tinker = $this->createTinker();
+
+        $result = $tinker->execute("dump('<info>hello</info>');");
+
+        $this->assertSame('"<info>hello</info>"', $result['output'][0]['output']);
+
+        $events = [];
+        $tinker->executeStreaming("dump('<info>hello</info>');", function (array $event) use (&$events): void {
+            $events[] = $event;
+        });
+
+        $outputEvents = array_filter($events, fn (array $event): bool => $event['type'] === 'output');
+        $output = implode('', array_column($outputEvents, 'data'));
+
+        $this->assertSame('"<info>hello</info>"', trim($output));
+    }
+
     private function createTinker(): Tinker
     {
         $config = new Configuration([

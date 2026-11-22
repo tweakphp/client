@@ -347,7 +347,7 @@ class Tinker
         VarDumper::setHandler(function ($var) use ($config) {
             self::$dumpOccurred = true;
             $output = $config->getPresenter()->present($var);
-            $this->output->write($output, true);
+            $this->output->write($output, true, OutputInterface::OUTPUT_RAW);
 
             return $output;
         });
